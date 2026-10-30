@@ -1,0 +1,21 @@
+id: v16-removed-python-stdlib
+title: Removed Python standard library modules
+target: v16
+app: frappe
+severity: error
+category: loud
+stage: T-30
+match:
+  type: import_path
+  modules: [imghdr, cgi, imp, telnetlib, crypt, pipes, distutils]
+message: >
+  Python removed this standard library module (frappe v16 requires Python 3.14).
+  The import fails at import time, before Frappe even loads.
+replacement: >
+  Replace it with a maintained alternative, or declare a third-party backport.
+fix: before
+autofix: none
+confidence: high
+references:
+  - "BWH ERPNext Upgrade Playbook, section 'The Environment'"
+  - "https://github.com/kaulith/preflight/blob/main/docs/rules.md (rule v16-removed-python-stdlib)"
