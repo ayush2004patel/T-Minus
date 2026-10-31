@@ -1,0 +1,26 @@
+id: v16-hrms-removed-get-max-benefits
+title: HRMS get_max_benefits removed
+target: v16
+app: hrms
+severity: error
+category: quiet
+stage: T-30
+match:
+  type: call
+  check: removed
+  paths:
+    - hrms.payroll.doctype.employee_benefit_application.employee_benefit_application.get_max_benefits
+message: >
+  HRMS v16 rebuilt employee benefits and removed get_max_benefits. Importing it
+  raises ImportError when the module that uses it loads.
+replacement: >
+  Use get_salary_structure_assignment from
+  hrms.payroll.doctype.employee_benefit_claim.employee_benefit_claim and read
+  max_benefits from that Salary Structure Assignment. To support v15 and v16 in
+  one branch, wrap the import in try/except ImportError (T-MINUS skips guarded imports).
+fix: before
+autofix: none
+confidence: high
+references:
+  - "BWH ERPNext Upgrade Playbook, section 'Quick tip' (compat.py example)"
+  - "verified: hrms version-15 employee_benefit_application.py defines it; absent from hrms version-16"

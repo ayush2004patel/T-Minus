@@ -1,0 +1,26 @@
+id: v16-erpnext-removed-get-batch-incoming-rate
+title: get_batch_incoming_rate removed from ERPNext
+target: v16
+app: erpnext
+severity: error
+category: quiet
+stage: T-30
+match:
+  type: call
+  check: removed
+  paths:
+    - erpnext.stock.utils.get_batch_incoming_rate
+    - erpnext.stock.stock_ledger.get_batch_incoming_rate
+message: >
+  get_batch_incoming_rate no longer exists in erpnext.stock.utils or
+  erpnext.stock.stock_ledger. Importing it raises ImportError, which migrate can
+  report as a mere warning (a fixtures sync is skipped and migrate still exits 0).
+replacement: >
+  In the playbook's case the row's own incoming_rate replaced it. Port the logic,
+  do not redesign it: check what the old call returned for non-batch items too.
+fix: before
+autofix: none
+confidence: high
+references:
+  - "BWH ERPNext Upgrade Playbook, section 'Warning that is an error'"
+  - "verified: defined in erpnext version-15 (stock/utils.py, stock/stock_ledger.py), absent from version-16"

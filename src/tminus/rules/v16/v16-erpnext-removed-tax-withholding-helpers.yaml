@@ -1,0 +1,49 @@
+id: v16-erpnext-removed-tax-withholding-helpers
+title: Tax withholding helper functions removed
+target: v16
+app: erpnext
+severity: error
+category: quiet
+stage: T-30
+match:
+  type: call
+  check: removed
+  paths:
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_advance_adjusted_in_invoice
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_advance_tax_across_fiscal_year
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_advance_vouchers
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_cost_center
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_deducted_tax
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_invoice_total_without_tcs
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_invoice_vouchers
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_limit_consumed
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_lower_deduction_amount
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_lower_deduction_certificate
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_party_details
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_party_tax_withholding_details
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_payment_entry_vouchers
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_tax_amount
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_tax_row_for_tcs
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_tax_row_for_tds
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_tax_withholding_details
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_tax_withholding_rates
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_taxes_deducted_on_advances_allocated
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_tcs_amount
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.get_tds_amount
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.is_tax_deducted_on_the_basis_of_inv
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.is_valid_certificate
+    - erpnext.accounts.doctype.tax_withholding_category.tax_withholding_category.normal_round
+message: >
+  Tax Withholding was rebuilt around Tax Withholding Entry. In v16 the module
+  tax_withholding_category.py keeps only get_tax_id_for_party; the other
+  module-level helpers are gone, so importing or calling them fails.
+replacement: >
+  Rewrite the code against the new Tax Withholding Entry flow. There is no
+  one-to-one replacement for each helper, so read the ERPNext v16 Tax Withholding
+  migration guide before porting.
+fix: before
+autofix: none
+confidence: high
+references:
+  - "BWH ERPNext Upgrade Playbook, table 'Here are the functions we had to replace' (tax withholding helpers, about twenty)"
+  - "verified: 24 module-level functions in erpnext version-15 tax_withholding_category.py; only get_tax_id_for_party remains in version-16"

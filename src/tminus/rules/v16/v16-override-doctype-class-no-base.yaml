@@ -1,0 +1,25 @@
+id: v16-override-doctype-class-no-base
+title: override_doctype_class target does not inherit from another class
+target: v16
+app: frappe
+severity: error
+category: quiet
+stage: T-30
+match:
+  type: hook_class
+  hook: override_doctype_class
+  check: no_base
+message: >
+  A class named in override_doctype_class has no base class from another module.
+  v16 requires an override to inherit from the class it overrides, so the
+  DocType controller can fail to load when a user opens a document of that type.
+replacement: >
+  Subclass the original controller (for ToDo, import ToDo from
+  frappe.desk.doctype.todo.todo and write class CustomToDo(ToDo)), and call
+  super() in the methods you override.
+fix: before
+autofix: none
+confidence: high
+references:
+  - "https://github.com/frappe/frappe/wiki/Migrating-to-version-16 (override_doctype hook must use an extended class, PR #26152)"
+  - "BWH ERPNext Upgrade Playbook, 'Other Errors' table, row 4"

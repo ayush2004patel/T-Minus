@@ -37,6 +37,7 @@ references:
 | `hook_key` | hook declared in `hooks.py` |
 | `override_subclass` | `override_doctype_class` not subclassing the controller |
 | `hook_function` | function named in a hooks.py table (e.g. `has_permission`); `check: returns_none` or `check: unreadable` |
+| `hook_class` | class named in a hooks.py table (e.g. `override_doctype_class`); `check: no_base` or `check: unreadable` |
 | `missing_hook` | app ships files but lacks a hook |
 | `doctype` | removed doctype named anywhere (calls, dicts, SQL, hooks, links, custom fields) |
 | `doctype_field` | removed/renamed field, including doc-typed attribute access |

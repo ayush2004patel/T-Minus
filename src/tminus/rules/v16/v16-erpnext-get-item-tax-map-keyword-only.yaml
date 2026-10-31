@@ -1,0 +1,25 @@
+id: v16-erpnext-get-item-tax-map-keyword-only
+title: get_item_tax_map is keyword-only and takes the document
+target: v16
+app: erpnext
+severity: error
+category: quiet
+stage: T-30
+match:
+  type: call
+  check: keyword_only
+  paths:
+    - erpnext.stock.get_item_details.get_item_tax_map
+message: >
+  v15 called get_item_tax_map(company, item_tax_template). In v16 the signature is
+  get_item_tax_map(*, doc, tax_template=None, as_json=True), so any positional
+  argument raises TypeError.
+replacement: >
+  Call get_item_tax_map(doc=<the document>, tax_template=<template>). The first
+  argument is now the whole document (its company is read from it), not the company name.
+fix: before
+autofix: none
+confidence: high
+references:
+  - "BWH ERPNext Upgrade Playbook, table 'Here are the functions we had to replace'"
+  - "verified: erpnext version-15 stock/get_item_details.py vs version-16 (signature starts with *)"

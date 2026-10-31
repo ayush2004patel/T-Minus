@@ -1,4 +1,4 @@
-"""App-level scanner: read hooks.py tables and check the functions they name."""
+"""App-level scanner: read hooks.py tables and check the functions/classes they name."""
 
 from __future__ import annotations
 
@@ -7,12 +7,14 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
-from tminus.engine.matchers.returns_none import FunctionNode, can_return_none
-from tminus.engine.models import Finding, HookFunctionMatch, Rule
+from tminus.engine.matchers.returns_none import can_return_none
+from tminus.engine.matchers.subclass import has_external_base
+from tminus.engine.models import Finding, HookClassMatch, HookFunctionMatch, Rule
 from tminus.engine.paths import is_skipped
 from tminus.engine.suppress import ignored_ids
 
 ParseCache = dict[Path, tuple[list[str], ast.Module] | None]
+_FUNCTIONS = (ast.FunctionDef, ast.AsyncFunctionDef)
 
 
 class NotLiteralError(Exception):
@@ -21,7 +23,7 @@ class NotLiteralError(Exception):
 
 @dataclass(frozen=True)
 class HookEntry:
-    """One `DocType -> dotted function path` pair from a hooks.py table."""
+    """One `DocType -> dotted path` pair from a hooks.py table."""
 
     key: str
     dotted: str
@@ -29,12 +31,24 @@ class HookEntry:
 
 
 @dataclass(frozen=True)
-class LocatedFunction:
-    """A hook target found in the app's own source."""
+class Located:
+    """A hook target (function or class) found in the app's own source."""
 
     file: Path
     lines: list[str]
-    func: FunctionNode
+    tree: ast.Module
+    node: ast.stmt
+
+
+@dataclass(frozen=True)
+class HookContext:
+    """Everything known about one hook entry while rules are applied to it."""
+
+    hooks_path: Path
+    hooks_lines: list[str]
+    hook: str
+    entry: HookEntry
+    located: Located | None
 
 
 def find_hooks_files(root: Path) -> Iterator[Path]:
@@ -91,20 +105,22 @@ def _parse(path: Path, cache: ParseCache) -> tuple[list[str], ast.Module] | None
     return cache[path]
 
 
-def _find_function(tree: ast.Module, name: str) -> FunctionNode | None:
-    """Find a top-level function by name."""
+def _find_top_level(tree: ast.Module, name: str) -> ast.stmt | None:
+    """Find a top-level function or class by name."""
     for node in tree.body:
-        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and node.name == name:
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef | ast.ClassDef) and (
+            node.name == name
+        ):
             return node
     return None
 
 
-def _locate(pkg_dir: Path, dotted: str, cache: ParseCache) -> LocatedFunction | None:
-    """Resolve `app.module.func` to a function in this app's own source, else None."""
+def _locate(pkg_dir: Path, dotted: str, cache: ParseCache) -> Located | None:
+    """Resolve `app.module.name` to a function/class in this app's own source, else None."""
     parts = dotted.split(".")
     if len(parts) < 2 or parts[0] != pkg_dir.name:  # points outside this app
         return None
-    module_parts, func_name = parts[1:-1], parts[-1]
+    module_parts, name = parts[1:-1], parts[-1]
     base = pkg_dir.joinpath(*module_parts)
     candidates = [base / "__init__.py"]
     if module_parts:
@@ -116,8 +132,8 @@ def _locate(pkg_dir: Path, dotted: str, cache: ParseCache) -> LocatedFunction | 
         if parsed is None:
             return None
         lines, tree = parsed
-        func = _find_function(tree, func_name)
-        return LocatedFunction(path, lines, func) if func else None
+        node = _find_top_level(tree, name)
+        return Located(path, lines, tree, node) if node else None
     return None
 
 
@@ -126,22 +142,64 @@ def _line(lines: list[str], number: int) -> str:
     return lines[number - 1] if 0 < number <= len(lines) else ""
 
 
+def _apply_rule(rule: Rule, ctx: HookContext) -> Finding | None:
+    """Apply one hook rule to one hook entry; returns a finding or None."""
+    match = rule.match
+    if not isinstance(match, HookFunctionMatch | HookClassMatch) or match.hook != ctx.hook:
+        return None
+    entry = ctx.entry
+    detail = f'{ctx.hook}["{entry.key}"] -> {entry.dotted} (hooks.py:{entry.line})'
+    kinds = _FUNCTIONS if isinstance(match, HookFunctionMatch) else (ast.ClassDef,)
+    located = ctx.located
+    target = located if located is not None and isinstance(located.node, kinds) else None
+
+    if match.check == "unreadable":  # target missing, outside the app, or the wrong kind
+        if target is not None:
+            return None
+        text = _line(ctx.hooks_lines, entry.line)
+        if rule.id in ignored_ids(text):
+            return None
+        return Finding.from_rule(rule, str(ctx.hooks_path), entry.line, text, detail)
+
+    if target is None:
+        return None
+    node = target.node
+    line: int | None = None
+    if isinstance(match, HookFunctionMatch) and isinstance(
+        node, ast.FunctionDef | ast.AsyncFunctionDef
+    ):
+        line = can_return_none(node)
+    elif isinstance(node, ast.ClassDef):
+        line = None if has_external_base(node, target.tree) else node.lineno
+    if line is None:
+        return None
+    text = _line(target.lines, line)
+    if rule.id in ignored_ids(text) | ignored_ids(_line(target.lines, node.lineno)):
+        return None
+    return Finding.from_rule(rule, str(target.file), line, text, detail)
+
+
 def scan_hooks(root: Path, rules: Iterable[Rule]) -> tuple[list[Finding], list[str]]:
-    """Apply hook_function rules; returns findings plus notes about what was not checked."""
-    hook_rules = [r for r in rules if isinstance(r.match, HookFunctionMatch)]
+    """Apply hook rules; returns findings plus notes about what was not checked."""
+    hook_rules = [r for r in rules if isinstance(r.match, HookFunctionMatch | HookClassMatch)]
     findings: list[Finding] = []
     notes: list[str] = []
-    cache: ParseCache = {}
     if not hook_rules:
         return findings, notes
+    cache: ParseCache = {}
+    hook_names = sorted(
+        {
+            r.match.hook
+            for r in hook_rules
+            if isinstance(r.match, HookFunctionMatch | HookClassMatch)
+        }
+    )
     for hooks_path in find_hooks_files(root):
         parsed = _parse(hooks_path, cache)
         if parsed is None:  # per-file pass already reported the unreadable file
             continue
         hooks_lines, tree = parsed
-        for hook in sorted(
-            {r.match.hook for r in hook_rules if isinstance(r.match, HookFunctionMatch)}
-        ):
+        for hook in hook_names:
             try:
                 entries = read_hook_entries(tree, hook)
             except NotLiteralError:
@@ -149,26 +207,9 @@ def scan_hooks(root: Path, rules: Iterable[Rule]) -> tuple[list[Finding], list[s
                 continue
             for entry in entries:
                 located = _locate(hooks_path.parent, entry.dotted, cache)
-                detail = f'{hook}["{entry.key}"] -> {entry.dotted} (hooks.py:{entry.line})'
+                ctx = HookContext(hooks_path, hooks_lines, hook, entry, located)
                 for rule in hook_rules:
-                    match = rule.match
-                    if not isinstance(match, HookFunctionMatch) or match.hook != hook:
-                        continue
-                    if match.check == "unreadable" and located is None:
-                        text = _line(hooks_lines, entry.line)
-                        if rule.id not in ignored_ids(text):
-                            findings.append(
-                                Finding.from_rule(rule, str(hooks_path), entry.line, text, detail)
-                            )
-                    elif match.check == "returns_none" and located is not None:
-                        line = can_return_none(located.func)
-                        if line is None:
-                            continue
-                        text = _line(located.lines, line)
-                        def_text = _line(located.lines, located.func.lineno)
-                        suppressed = ignored_ids(text) | ignored_ids(def_text)
-                        if rule.id not in suppressed:
-                            findings.append(
-                                Finding.from_rule(rule, str(located.file), line, text, detail)
-                            )
+                    finding = _apply_rule(rule, ctx)
+                    if finding is not None:
+                        findings.append(finding)
     return sorted(findings, key=lambda f: (f.file, f.line, f.rule_id)), notes

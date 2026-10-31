@@ -1,0 +1,22 @@
+id: v16-override-doctype-class-unreadable
+title: override_doctype_class target not found in this app
+target: v16
+app: frappe
+severity: warning
+category: quiet
+stage: T-30
+match:
+  type: hook_class
+  hook: override_doctype_class
+  check: unreadable
+message: >
+  The class named in override_doctype_class is not in this app's own source
+  (another app, a missing class, or a path T-MINUS cannot resolve), so it cannot
+  tell whether it inherits from the class it overrides.
+replacement: >
+  Open the class and check that it inherits from the original controller.
+fix: before
+autofix: none
+confidence: medium
+references:
+  - "https://github.com/frappe/frappe/wiki/Migrating-to-version-16 (override_doctype hook must use an extended class, PR #26152)"

@@ -4,19 +4,9 @@ from __future__ import annotations
 
 import ast
 
+from tminus.engine.context import FileContext
+from tminus.engine.guards import catches_import_error
 from tminus.engine.models import ImportPathMatch, Rule
-
-_IMPORT_ERRORS = {"ImportError", "ModuleNotFoundError"}  # handlers that make an import safe
-
-
-def _handler_catches_import_error(handler: ast.ExceptHandler) -> bool:
-    """True if this except clause names ImportError or ModuleNotFoundError."""
-    exc = handler.type
-    if isinstance(exc, ast.Name):
-        return exc.id in _IMPORT_ERRORS
-    if isinstance(exc, ast.Tuple):  # except (ImportError, OSError):
-        return any(isinstance(e, ast.Name) and e.id in _IMPORT_ERRORS for e in exc.elts)
-    return False
 
 
 class _ImportVisitor(ast.NodeVisitor):
@@ -30,7 +20,7 @@ class _ImportVisitor(ast.NodeVisitor):
 
     def visit_Try(self, node: ast.Try) -> None:  # noqa: N802 (ast naming)
         """Treat the try body as safe when an except clause catches ImportError."""
-        if any(_handler_catches_import_error(h) for h in node.handlers):
+        if any(catches_import_error(h) for h in node.handlers):
             self.guarded += 1
             for stmt in node.body:
                 self.visit(stmt)
@@ -60,10 +50,10 @@ class _ImportVisitor(ast.NodeVisitor):
             self.lines.append(node.lineno)
 
 
-def match_import_path(tree: ast.AST, rule: Rule) -> list[int]:
+def match_import_path(ctx: FileContext, rule: Rule) -> list[int]:
     """Return line numbers of imports that hit the rule's module list."""
     if not isinstance(rule.match, ImportPathMatch):  # wrong rule type for this matcher
         return []
     visitor = _ImportVisitor(set(rule.match.modules))
-    visitor.visit(tree)
+    visitor.visit(ctx.tree)
     return visitor.lines

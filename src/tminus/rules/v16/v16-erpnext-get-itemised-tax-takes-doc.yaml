@@ -1,0 +1,26 @@
+id: v16-erpnext-get-itemised-tax-takes-doc
+title: get_itemised_tax now takes the document, not its taxes
+target: v16
+app: erpnext
+severity: warning
+category: quiet
+stage: T-30
+match:
+  type: call
+  check: first_arg_named
+  names: [taxes]
+  paths:
+    - erpnext.controllers.taxes_and_totals.get_itemised_tax
+message: >
+  v15 took the tax rows: get_itemised_tax(taxes). v16 takes the document and reads
+  its item-wise tax details itself: get_itemised_tax(doc). Passing the taxes list
+  fails when the function reads doc attributes. Detected by the argument name, so
+  it can miss other spellings.
+replacement: >
+  Pass the document: get_itemised_tax(doc).
+fix: before
+autofix: none
+confidence: medium
+references:
+  - "BWH ERPNext Upgrade Playbook, table 'Here are the functions we had to replace'"
+  - "verified: erpnext version-15 controllers/taxes_and_totals.py (taxes) vs version-16 (doc)"

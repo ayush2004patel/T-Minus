@@ -12,6 +12,14 @@ Newest first. One entry per working session or logical change. Records what chan
 - Open: <anything unfinished or risky>
 ```
 
+## 2026-10-31 — M1.2 override_doctype_class rule
+- Commit: <your hash>
+- Changed (new): engine/matchers/subclass.py, rules/v16/v16-override-doctype-class-{no-base,unreadable}.yaml, tests/{test_subclass,test_override_hook}.py, tests/fixtures/overrides_{bad,clean}/
+- Changed (edited): engine/models.py (HookClassMatch), engine/scanners/hooks.py (refactored: _apply_rule, HookContext, Located), report/render.py, tests/test_rule_coverage.py, docs/rule-schema.md
+- Why: v16 requires an override class to inherit from the class it overrides (PR #26152).
+- Tests: 62 passed; ruff, ruff format --check, mypy --strict clean.
+- Open: cannot verify a base is the original controller (needs runtime stage); only module-level classes resolved.
+
 ## 2026-10-30 — M1.1 has_permission rule (app-level scanning)
 - Commit: uncommitted
 - Changed (new): src/tminus/engine/{suppress,paths}.py, engine/matchers/returns_none.py, engine/scanners/hooks.py, rules/v16/{v16-has-permission-hook-returns-none,v16-has-permission-hook-unreadable}.yaml, tests/{test_returns_none,test_hooks_scanner}.py, tests/fixtures/app_bad/, tests/fixtures/app_clean/

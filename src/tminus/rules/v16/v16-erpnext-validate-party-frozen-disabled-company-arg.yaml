@@ -1,0 +1,25 @@
+id: v16-erpnext-validate-party-frozen-disabled-company-arg
+title: validate_party_frozen_disabled needs the company first
+target: v16
+app: erpnext
+severity: error
+category: quiet
+stage: T-30
+match:
+  type: call
+  check: positional_count
+  count: 2
+  paths:
+    - erpnext.accounts.party.validate_party_frozen_disabled
+message: >
+  v15 signature: validate_party_frozen_disabled(party_type, party_name). v16
+  signature: validate_party_frozen_disabled(company, party_type, party_name). A
+  two-argument call raises TypeError. Calls that use keyword arguments are not detected.
+replacement: >
+  Pass the company as the first argument.
+fix: before
+autofix: none
+confidence: high
+references:
+  - "BWH ERPNext Upgrade Playbook, table 'Here are the functions we had to replace'"
+  - "verified: erpnext version-15 accounts/party.py vs version-16"

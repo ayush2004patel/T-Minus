@@ -60,3 +60,17 @@ def test_target_yaml_is_not_a_rule(tmp_path: Path) -> None:
     _write(tmp_path / "v16", "r1")
     (tmp_path / "v16" / "target.yaml").write_text("target: v16\n")
     assert [r.id for r in load_rules("v16", tmp_path)] == ["r1"]
+
+
+def test_positional_count_needs_count(tmp_path: Path) -> None:
+    """A call rule using positional_count without `count` is rejected."""
+    folder = tmp_path / "v16"
+    folder.mkdir()
+    (folder / "r1.yaml").write_text(
+        GOOD.format(id="r1", extra="").replace(
+            "match: {type: import_path, modules: [imp]}",
+            "match: {type: call, check: positional_count, paths: [a.b]}",
+        )
+    )
+    with pytest.raises(RuleLoadError):
+        load_rules("v16", tmp_path)

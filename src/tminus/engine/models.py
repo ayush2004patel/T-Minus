@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 Severity = Literal["error", "warning", "info"]
 Category = Literal["data", "loud", "quiet", "silent"]  # the four failure classes
@@ -37,8 +37,38 @@ class HookFunctionMatch(StrictModel):
     check: Literal["returns_none", "unreadable"]
 
 
+class HookClassMatch(StrictModel):
+    """Check the classes named in a hooks.py table such as override_doctype_class."""
+
+    type: Literal["hook_class"]
+    hook: str
+    check: Literal["no_base", "unreadable"]
+
+
+class CallMatch(StrictModel):
+    """Check uses of functions given by full dotted path (removed or changed signature)."""
+
+    type: Literal["call"]
+    paths: list[str] = Field(min_length=1)  # every import path that reaches the function
+    check: Literal["removed", "keyword_only", "positional_count", "first_arg_named"]
+    count: int | None = None  # positional_count: flag calls with exactly this many arguments
+    names: list[str] = Field(default_factory=list)  # first_arg_named: old parameter names
+
+    @model_validator(mode="after")
+    def _check_extra_fields(self) -> Self:
+        """Make sure each check comes with the extra field it needs."""
+        if self.check == "positional_count" and self.count is None:
+            raise ValueError("positional_count needs `count`")
+        if self.check == "first_arg_named" and not self.names:
+            raise ValueError("first_arg_named needs `names`")
+        return self
+
+
 # All match types; the `type` key decides which model validates the YAML.
-Match = Annotated[ImportPathMatch | HookFunctionMatch, Field(discriminator="type")]
+Match = Annotated[
+    ImportPathMatch | HookFunctionMatch | HookClassMatch | CallMatch,
+    Field(discriminator="type"),
+]
 
 
 class Rule(StrictModel):

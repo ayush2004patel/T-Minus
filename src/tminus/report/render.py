@@ -8,7 +8,7 @@ from collections import Counter
 from tminus.engine.models import SEVERITY_ORDER, ScanResult
 
 NOT_CHECKED = [  # honest list of what M0 does not cover yet
-    "Only Python imports and has_permission hooks are scanned (import_path, hook_function).",
+    "Only Python imports, has_permission and override_doctype_class hooks are scanned.",
     "JavaScript, Jinja, other hooks, site-saved code, data and bench checks"
     " are not implemented yet.",
 ]
