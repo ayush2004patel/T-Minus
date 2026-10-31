@@ -1,0 +1,22 @@
+id: v16-has-permission-hook-unreadable
+title: has_permission hook function not found in this app
+target: v16
+app: frappe
+severity: warning
+category: silent
+stage: T-30
+match:
+  type: hook_function
+  hook: has_permission
+  check: unreadable
+message: >
+  The function named in the has_permission hook is not in this app's own source
+  (another app, a missing function, or a path T-MINUS cannot resolve), so it cannot
+  tell whether it returns None.
+replacement: >
+  Open the function and make sure every path returns True or False.
+fix: before
+autofix: none
+confidence: medium
+references:
+  - "https://github.com/frappe/frappe/wiki/Migrating-to-version-16 (Permission system breaking changes, PR #24253)"

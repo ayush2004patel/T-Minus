@@ -1,0 +1,23 @@
+id: v16-has-permission-hook-returns-none
+title: has_permission hook can return None
+target: v16
+app: frappe
+severity: error
+category: silent
+stage: T-30
+match:
+  type: hook_function
+  hook: has_permission
+  check: returns_none
+message: >
+  A function named in the has_permission hook can return None. v15 read None as
+  "no opinion" and allowed access; v16 requires an explicit True, so every user
+  except Administrator can lose access without any error.
+replacement: >
+  Return True explicitly at the end of the function (and False where access must be denied).
+fix: before
+autofix: none
+confidence: high
+references:
+  - "https://github.com/frappe/frappe/wiki/Migrating-to-version-16 (Permission system breaking changes, PR #24253)"
+  - "BWH ERPNext Upgrade Playbook, section 'A permission hook that returns None now denies'"

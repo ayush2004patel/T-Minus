@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -29,8 +29,16 @@ class ImportPathMatch(StrictModel):
     modules: list[str] = Field(min_length=1)
 
 
-# More match types join this as a union later (call, hook_key, ...).
-Match = ImportPathMatch
+class HookFunctionMatch(StrictModel):
+    """Check the functions named in a hooks.py table such as has_permission."""
+
+    type: Literal["hook_function"]
+    hook: str
+    check: Literal["returns_none", "unreadable"]
+
+
+# All match types; the `type` key decides which model validates the YAML.
+Match = Annotated[ImportPathMatch | HookFunctionMatch, Field(discriminator="type")]
 
 
 class Rule(StrictModel):
@@ -64,6 +72,23 @@ class Finding(StrictModel):
     snippet: str
     message: str
     replacement: str
+    detail: str = ""  # extra context, e.g. which hook points at this code
+
+    @classmethod
+    def from_rule(cls, rule: Rule, file: str, line: int, snippet: str, detail: str = "") -> Finding:
+        """Build a finding from a rule and a code location."""
+        return cls(
+            rule_id=rule.id,
+            severity=rule.severity,
+            category=rule.category,
+            stage=rule.stage,
+            file=file,
+            line=line,
+            snippet=snippet.strip(),
+            message=rule.message.strip(),
+            replacement=rule.replacement.strip(),
+            detail=detail,
+        )
 
 
 class ScanResult(StrictModel):

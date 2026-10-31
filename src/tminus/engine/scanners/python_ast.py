@@ -1,49 +1,27 @@
-"""Scan Python source with the stdlib ast module."""
+"""Scan one Python file with the stdlib ast module (per-file rules)."""
 
 from __future__ import annotations
 
 import ast
-import re
 from collections.abc import Iterable
 
 from tminus.engine.matchers import MATCHERS
 from tminus.engine.models import Finding, Rule
-
-_IGNORE_RE = re.compile(r"#\s*tminus:\s*ignore\[([^\]]*)\]")  # "# tminus: ignore[rule-id]"
-
-
-def _ignored_ids(line: str) -> set[str]:
-    """Return rule ids suppressed by an ignore comment on this line."""
-    match = _IGNORE_RE.search(line)
-    if not match:
-        return set()
-    return {part.strip() for part in match.group(1).split(",") if part.strip()}
+from tminus.engine.suppress import ignored_ids
 
 
 def scan_source(source: str, filename: str, rules: Iterable[Rule]) -> list[Finding]:
-    """Run all rules over one file's source; raises SyntaxError if it cannot be parsed."""
+    """Run all per-file rules over one file's source; raises SyntaxError if unparsable."""
     tree = ast.parse(source, filename=filename)
     lines = source.splitlines()
     findings: list[Finding] = []
     for rule in rules:
         matcher = MATCHERS.get(rule.match.type)
-        if matcher is None:  # rule type not implemented yet
+        if matcher is None:  # app-level rule types are handled by scanners/hooks.py
             continue
         for lineno in matcher(tree, rule):
             text = lines[lineno - 1] if 0 < lineno <= len(lines) else ""
-            if rule.id in _ignored_ids(text):  # suppressed by comment
+            if rule.id in ignored_ids(text):  # suppressed by comment
                 continue
-            findings.append(
-                Finding(
-                    rule_id=rule.id,
-                    severity=rule.severity,
-                    category=rule.category,
-                    stage=rule.stage,
-                    file=filename,
-                    line=lineno,
-                    snippet=text.strip(),
-                    message=rule.message.strip(),
-                    replacement=rule.replacement.strip(),
-                )
-            )
+            findings.append(Finding.from_rule(rule, filename, lineno, text))
     return sorted(findings, key=lambda f: (f.file, f.line, f.rule_id))

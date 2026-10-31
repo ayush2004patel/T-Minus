@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import ast
 
-from tminus.engine.models import Rule
+from tminus.engine.models import ImportPathMatch, Rule
 
 _IMPORT_ERRORS = {"ImportError", "ModuleNotFoundError"}  # handlers that make an import safe
 
@@ -62,6 +62,8 @@ class _ImportVisitor(ast.NodeVisitor):
 
 def match_import_path(tree: ast.AST, rule: Rule) -> list[int]:
     """Return line numbers of imports that hit the rule's module list."""
+    if not isinstance(rule.match, ImportPathMatch):  # wrong rule type for this matcher
+        return []
     visitor = _ImportVisitor(set(rule.match.modules))
     visitor.visit(tree)
     return visitor.lines

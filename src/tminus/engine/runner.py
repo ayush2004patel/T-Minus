@@ -1,4 +1,4 @@
-"""Walk a path and run the scanners over every Python file."""
+"""Walk a path and run the scanners over it."""
 
 from __future__ import annotations
 
@@ -6,9 +6,9 @@ from collections.abc import Iterator
 from pathlib import Path
 
 from tminus.engine.models import Finding, Rule, ScanResult
+from tminus.engine.paths import is_skipped
+from tminus.engine.scanners.hooks import scan_hooks
 from tminus.engine.scanners.python_ast import scan_source
-
-SKIP_DIRS = {".git", "node_modules", "env", ".venv", "venv", "__pycache__", "dist", "build"}
 
 
 def iter_python_files(root: Path) -> Iterator[Path]:
@@ -17,7 +17,7 @@ def iter_python_files(root: Path) -> Iterator[Path]:
         yield root
         return
     for path in sorted(root.rglob("*.py")):
-        if not SKIP_DIRS.intersection(path.relative_to(root).parts):
+        if not is_skipped(root, path):
             yield path
 
 
@@ -28,7 +28,7 @@ def scan_path(root: Path, rules: list[Rule]) -> ScanResult:
     findings: list[Finding] = []
     skipped: list[str] = []
     count = 0
-    for path in iter_python_files(root):
+    for path in iter_python_files(root):  # pass 1: per-file rules
         try:
             source = path.read_text(encoding="utf-8")
             findings.extend(scan_source(source, str(path), rules))
@@ -37,4 +37,7 @@ def scan_path(root: Path, rules: list[Rule]) -> ScanResult:
             skipped.append(f"{path}: cannot read ({exc.__class__.__name__})")
         except SyntaxError as exc:  # not valid Python for this interpreter
             skipped.append(f"{path}: syntax error at line {exc.lineno}")
+    hook_findings, hook_notes = scan_hooks(root, rules)  # pass 2: app-level hook rules
+    findings.extend(hook_findings)
+    skipped.extend(hook_notes)
     return ScanResult(findings=findings, skipped=skipped, files_scanned=count)

@@ -4,7 +4,7 @@
 - Repo, pyproject (`uv`), `typer` CLI skeleton, pydantic rule loader, report model, `pytest` + fixtures, CI.
 - Rule schema v1, `target.yaml`, rule-coverage test.
 
-## M1 — T-30 static scan (parity with Preflight on v16 frappe/ERPNext core)
+## M1 — T-30 static scan (in progress: import_path, hook_function done) (parity with Preflight on v16 frappe/ERPNext core)
 - Python `ast` scanner; matchers: import_path, call, hook_key, doctype, doctype_field, select_field, override_subclass, returns_none, undeclared_import.
 - Bench/app compatibility rules; `--online` checks.
 - Output: text, json, sarif, html, md; `--baseline`; ignore comments.

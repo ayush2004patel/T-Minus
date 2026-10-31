@@ -8,8 +8,9 @@ from collections import Counter
 from tminus.engine.models import SEVERITY_ORDER, ScanResult
 
 NOT_CHECKED = [  # honest list of what M0 does not cover yet
-    "Only Python imports are scanned (rule type: import_path).",
-    "JavaScript, Jinja, hooks, site-saved code, data and bench checks are not implemented yet.",
+    "Only Python imports and has_permission hooks are scanned (import_path, hook_function).",
+    "JavaScript, Jinja, other hooks, site-saved code, data and bench checks"
+    " are not implemented yet.",
 ]
 
 
@@ -22,6 +23,8 @@ def render_text(result: ScanResult, target: str) -> str:
             f"{f.severity.upper()} {f.file}:{f.line}  {f.rule_id}  [{f.category}, {f.stage}]"
         )
         out.append(f"  {f.snippet}")
+        if f.detail:
+            out.append(f"  {f.detail}")
         out.append(f"  {f.message}")
         out.append(f"  Fix: {f.replacement}")
         out.append("")

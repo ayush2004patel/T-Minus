@@ -36,7 +36,7 @@ references:
 | `call` | Python call, optional kwargs / positional count / private URL host / return arity |
 | `hook_key` | hook declared in `hooks.py` |
 | `override_subclass` | `override_doctype_class` not subclassing the controller |
-| `returns_none` / `unreadable_function` | hooked function that can return None / cannot be read |
+| `hook_function` | function named in a hooks.py table (e.g. `has_permission`); `check: returns_none` or `check: unreadable` |
 | `missing_hook` | app ships files but lacks a hook |
 | `doctype` | removed doctype named anywhere (calls, dicts, SQL, hooks, links, custom fields) |
 | `doctype_field` | removed/renamed field, including doc-typed attribute access |
