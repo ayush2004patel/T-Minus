@@ -12,6 +12,13 @@ Newest first. One entry per working session or logical change. Records what chan
 - Open: <anything unfinished or risky>
 ```
 
+## 2026-10-31 — M1.3 call matcher
+- Changed (new): engine/{guards,names,context}.py, engine/matchers/call.py, 6 rules in rules/v16/ (get-batch-incoming-rate, get-item-tax-map, get-itemised-tax, validate-party-frozen-disabled, hrms get-max-benefits, tax-withholding helpers), tests/{test_names,test_call_matcher}.py
+- Changed (edited): models.py (CallMatch), matchers/__init__.py, matchers/import_path.py, scanners/python_ast.py (FileContext), tests/test_loader.py, fixtures
+- Why: removed/changed ERPNext and HRMS functions fail at import or call time. Paths and signatures verified against erpnext/hrms version-15 and version-16 source.
+- Tests: 90 passed. Scan of ERPNext v15 = 12 real findings; ERPNext v16 + HRMS v16 = 0.
+- Open: positional_count misses keyword-style calls; first_arg_named is a heuristic; alias table is scope-insensitive; string paths (frappe.get_attr("...")) not followed.
+
 ## 2026-10-31 — M1.2 override_doctype_class rule
 - Commit: <your hash>
 - Changed (new): engine/matchers/subclass.py, rules/v16/v16-override-doctype-class-{no-base,unreadable}.yaml, tests/{test_subclass,test_override_hook}.py, tests/fixtures/overrides_{bad,clean}/
