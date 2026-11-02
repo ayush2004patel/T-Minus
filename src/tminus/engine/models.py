@@ -63,13 +63,30 @@ class CallMatch(StrictModel):
             raise ValueError("first_arg_named needs `names`")
         return self
 
+class DoctypeFieldMatch(StrictModel):
+    """Fields that were removed or renamed, per DocType, with a note on what replaced them."""
+
+    type: Literal["doctype_field"]
+    doctypes: dict[str, dict[str, str]] = Field(min_length=1)  # doctype -> {field -> note}
+
+
+class DoctypeNameMatch(StrictModel):
+    """DocTypes that were removed, with a note on what replaced them."""
+
+    type: Literal["doctype_name"]
+    names: dict[str, str] = Field(min_length=1)  # doctype -> note
+
 
 # All match types; the `type` key decides which model validates the YAML.
 Match = Annotated[
-    ImportPathMatch | HookFunctionMatch | HookClassMatch | CallMatch,
+    ImportPathMatch
+    | HookFunctionMatch
+    | HookClassMatch
+    | CallMatch
+    | DoctypeFieldMatch
+    | DoctypeNameMatch,
     Field(discriminator="type"),
 ]
-
 
 class Rule(StrictModel):
     """One breaking change, loaded from one YAML file."""
@@ -89,6 +106,11 @@ class Rule(StrictModel):
     confidence: Confidence = "high"
     references: list[str] = Field(default_factory=list)
 
+class Hit(StrictModel):
+    """One place a matcher found: a line number and optional extra context."""
+
+    line: int
+    detail: str = ""
 
 class Finding(StrictModel):
     """One place in the scanned code that a rule matched."""
