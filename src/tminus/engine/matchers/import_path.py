@@ -6,7 +6,7 @@ import ast
 
 from tminus.engine.context import FileContext
 from tminus.engine.guards import catches_import_error
-from tminus.engine.models import ImportPathMatch, Rule
+from tminus.engine.models import Hit, ImportPathMatch, Rule
 
 
 class _ImportVisitor(ast.NodeVisitor):
@@ -50,10 +50,10 @@ class _ImportVisitor(ast.NodeVisitor):
             self.lines.append(node.lineno)
 
 
-def match_import_path(ctx: FileContext, rule: Rule) -> list[int]:
+def match_import_path(ctx: FileContext, rule: Rule) -> list[Hit]:
     """Return line numbers of imports that hit the rule's module list."""
     if not isinstance(rule.match, ImportPathMatch):  # wrong rule type for this matcher
         return []
     visitor = _ImportVisitor(set(rule.match.modules))
     visitor.visit(ctx.tree)
-    return visitor.lines
+    return [Hit(line=line) for line in visitor.lines]
