@@ -1,0 +1,42 @@
+id: v16-hrms-removed-fields
+title: HRMS fields removed in v16
+target: v16
+app: hrms
+severity: error
+category: quiet
+stage: T-30
+match:
+  type: doctype_field
+  doctypes:
+    Employee Advance:
+      exchange_rate: removed in v16 (no replacement found in the migration patches)
+    Employee Benefit Application:
+      pro_rata_dispensed_amount: removed in v16 (no replacement found in the migration patches)
+    Employee Benefit Application Detail:
+      earning_component: removed in v16 (no replacement found in the migration patches)
+      pay_against_benefit_claim: removed in v16 (no replacement found in the migration patches)
+    Employee Benefit Claim:
+      claim_date: removed in v16 (no replacement found in the migration patches)
+      pay_against_benefit_claim: removed in v16 (no replacement found in the migration patches)
+      salary_slip: removed in v16 (no replacement found in the migration patches)
+    Interview:
+      interview_round: replaced by interview_type (Interview Round was merged into Interview Type)
+    Interview Feedback:
+      interview_round: replaced by interview_type (Interview Round was merged into Interview Type)
+    Payroll Entry:
+      deduct_tax_for_unclaimed_employee_benefits: removed in v16 (no replacement found in the migration patches)
+    Salary Component:
+      pay_against_benefit_claim: removed in v16 (no replacement found in the migration patches)
+      only_tax_impact: removed in v16 (no replacement found in the migration patches)
+      create_separate_payment_entry_against_benefit_claim: removed in v16 (no replacement found in the migration patches)
+    Salary Slip:
+      deduct_tax_for_unclaimed_employee_benefits: removed in v16 (no replacement found in the migration patches)
+message: >
+  A field that no longer exists on this DocType in v16 is read, filtered on or written. Reading it can fail with an unknown-field error or quietly return nothing. The detail line says what replaced it.
+replacement: >
+  Use the replacement named in the detail line. Where it only says removed, read the v16 DocType and port the logic; do not redesign it.
+fix: before
+autofix: none
+confidence: high
+references:
+  - "verified: DocType JSON diff of hrms version-15 vs version-16 (fields of data type only)"

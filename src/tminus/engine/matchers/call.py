@@ -6,7 +6,7 @@ import ast
 
 from tminus.engine.context import FileContext
 from tminus.engine.guards import is_guarded
-from tminus.engine.models import CallMatch, Rule
+from tminus.engine.models import CallMatch, Hit, Rule
 
 
 def _removed_lines(ctx: FileContext, paths: set[str]) -> list[int]:
@@ -44,7 +44,7 @@ def _is_old_style(call: ast.Call, match: CallMatch) -> bool:
     return False
 
 
-def match_call(ctx: FileContext, rule: Rule) -> list[int]:
+def match_call(ctx: FileContext, rule: Rule) -> list[Hit]:
     """Return line numbers of uses that break on v16; guarded compat code is skipped."""
     match = rule.match
     if not isinstance(match, CallMatch):  # wrong rule type for this matcher
@@ -58,4 +58,5 @@ def match_call(ctx: FileContext, rule: Rule) -> list[int]:
             for call, path in ctx.calls
             if path is not None and path in paths and _is_old_style(call, match)
         ]
-    return sorted({line for line in lines if not is_guarded(line, ctx.guarded)})
+    kept = sorted({line for line in lines if not is_guarded(line, ctx.guarded)})
+    return [Hit(line=line) for line in kept]

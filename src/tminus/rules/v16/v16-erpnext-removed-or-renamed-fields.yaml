@@ -1,0 +1,171 @@
+id: v16-erpnext-removed-or-renamed-fields
+title: ERPNext fields removed, renamed or moved in v16
+target: v16
+app: erpnext
+severity: error
+category: quiet
+stage: T-30
+match:
+  type: doctype_field
+  doctypes:
+    Accounts Settings:
+      acc_frozen_upto: moved to Company.accounts_frozen_till_date
+      frozen_accounts_modifier: moved to Company.role_allowed_for_frozen_entries
+      post_change_gl_entries: moved to POS Settings.post_change_gl_entries
+      show_account_balance: removed in v16 (no replacement found in the migration patches)
+      show_party_balance: removed in v16 (no replacement found in the migration patches)
+    Advance Taxes and Charges:
+      allocated_amount: 'removed: tax withholding was rebuilt around Tax Withholding Entry; there is no one-to-one replacement field'
+    Asset:
+      gross_purchase_amount: renamed to net_purchase_amount
+      is_existing_asset: replaced by the Select field asset_type (value 'Existing Asset')
+      is_composite_asset: replaced by the Select field asset_type (value 'Composite Asset')
+    Asset Capitalization:
+      target_item_name: removed in v16 (no replacement found in the migration patches)
+      target_is_fixed_asset: removed in v16 (no replacement found in the migration patches)
+      target_batch_no: removed in v16 (no replacement found in the migration patches)
+      target_qty: removed in v16 (no replacement found in the migration patches)
+      target_has_batch_no: removed in v16 (no replacement found in the migration patches)
+      target_has_serial_no: removed in v16 (no replacement found in the migration patches)
+      target_serial_no: removed in v16 (no replacement found in the migration patches)
+      target_asset_location: removed in v16 (no replacement found in the migration patches)
+      capitalization_method: removed in v16 (no replacement found in the migration patches)
+    Asset Depreciation Schedule:
+      gross_purchase_amount: renamed to net_purchase_amount
+    Asset Repair:
+      stock_consumption: removed in v16 (no replacement found in the migration patches)
+      purchase_invoice: removed in v16 (no replacement found in the migration patches)
+    BOM:
+      scrap_items: replaced by the secondary_items table (BOM Secondary Item, secondary_item_type 'Scrap')
+      scrap_material_cost: renamed to secondary_items_cost
+      base_scrap_material_cost: renamed to base_secondary_items_cost
+    BOM Creator Item:
+      fg_item: removed in v16 (no replacement found in the migration patches)
+      source_warehouse: removed in v16 (no replacement found in the migration patches)
+      fg_reference_id: removed in v16 (no replacement found in the migration patches)
+      parent_row_no: removed in v16 (no replacement found in the migration patches)
+      allow_alternative_item: removed in v16 (no replacement found in the migration patches)
+    Budget:
+      fiscal_year: replaced by from_fiscal_year and to_fiscal_year
+      monthly_distribution: replaced by the budget_distribution table
+      accounts: a Budget now covers one account (field account); the accounts table is gone
+    Company:
+      expenses_included_in_valuation: removed in v16 (no replacement found in the migration patches)
+      expenses_included_in_asset_valuation: removed in v16 (no replacement found in the migration patches)
+    Customer:
+      salutation: removed in v16 (no replacement found in the migration patches)
+    Delivery Note:
+      campaign: replaced by utm_campaign; no migration patch copies the old value, so copy existing data yourself
+      source: replaced by utm_source; no migration patch copies the old value, so copy existing data yourself
+    Inventory Dimension:
+      mandatory_depends_on: removed in v16 (no replacement found in the migration patches)
+    Item:
+      customer: removed in v16 (no replacement found in the migration patches)
+    Job Card:
+      job_started: removed in v16 (no replacement found in the migration patches)
+      started_time: removed in v16 (no replacement found in the migration patches)
+      current_time: removed in v16 (no replacement found in the migration patches)
+      operation_row_number: removed in v16 (no replacement found in the migration patches)
+      scrap_items: replaced by the secondary_items table (Job Card Secondary Item, secondary_item_type 'Scrap')
+    Journal Entry:
+      paid_loan: removed in v16 (no replacement found in the migration patches)
+    Lead:
+      source: replaced by utm_source; no migration patch copies the old value, so copy existing data yourself
+      campaign_name: replaced by utm_campaign; no migration patch copies the old value, so copy existing data yourself
+    Manufacturing Settings:
+      default_wip_warehouse: moved to Company.default_wip_warehouse
+      default_fg_warehouse: moved to Company.default_fg_warehouse
+      default_scrap_warehouse: moved to Company.default_scrap_warehouse
+      set_op_cost_and_scrap_from_sub_assemblies: renamed to set_op_cost_and_secondary_items_from_sub_assemblies
+    Opportunity:
+      source: replaced by utm_source; no migration patch copies the old value, so copy existing data yourself
+      campaign: replaced by utm_campaign; no migration patch copies the old value, so copy existing data yourself
+    POS Closing Entry:
+      pos_transactions: renamed to pos_invoices
+    POS Closing Entry Taxes:
+      rate: removed in v16 (no replacement found in the migration patches)
+    POS Invoice:
+      campaign: replaced by utm_campaign; no migration patch copies the old value, so copy existing data yourself
+      source: replaced by utm_source; no migration patch copies the old value, so copy existing data yourself
+    POS Profile:
+      campaign: replaced by utm_campaign; no migration patch copies the old value, so copy existing data yourself
+      disable_grand_total_to_default_mop: 'replaced by set_grand_total_to_default_mop (inverted meaning: 1 now means set)'
+    Payment Entry:
+      party_balance: removed in v16 (no replacement found in the migration patches)
+      paid_from_account_balance: removed in v16 (no replacement found in the migration patches)
+      paid_to_account_balance: removed in v16 (no replacement found in the migration patches)
+      apply_tax_withholding_amount: replaced by apply_tds
+    Purchase Invoice:
+      tax_withholding_category: 'removed: tax withholding was rebuilt around Tax Withholding Entry; there is no one-to-one replacement field'
+      advance_tax: 'removed: tax withholding was rebuilt around Tax Withholding Entry; there is no one-to-one replacement field'
+      tax_withholding_net_total: 'removed: tax withholding was rebuilt around Tax Withholding Entry; there is no one-to-one replacement field'
+      base_tax_withholding_net_total: 'removed: tax withholding was rebuilt around Tax Withholding Entry; there is no one-to-one replacement field'
+      tax_withheld_vouchers: 'removed: tax withholding was rebuilt around Tax Withholding Entry; there is no one-to-one replacement field'
+    Purchase Order:
+      apply_tds: 'removed: tax withholding was rebuilt around Tax Withholding Entry; there is no one-to-one replacement field'
+      tax_withholding_category: 'removed: tax withholding was rebuilt around Tax Withholding Entry; there is no one-to-one replacement field'
+      tax_withholding_net_total: 'removed: tax withholding was rebuilt around Tax Withholding Entry; there is no one-to-one replacement field'
+      base_tax_withholding_net_total: 'removed: tax withholding was rebuilt around Tax Withholding Entry; there is no one-to-one replacement field'
+    Purchase Order Item:
+      apply_tds: 'removed: tax withholding was rebuilt around Tax Withholding Entry; there is no one-to-one replacement field'
+      subcontracted_quantity: renamed to subcontracted_qty
+    Purchase Receipt:
+      tax_withholding_net_total: 'removed: tax withholding was rebuilt around Tax Withholding Entry; there is no one-to-one replacement field'
+      base_tax_withholding_net_total: 'removed: tax withholding was rebuilt around Tax Withholding Entry; there is no one-to-one replacement field'
+    Purchase Receipt Item:
+      apply_tds: 'removed: tax withholding was rebuilt around Tax Withholding Entry; there is no one-to-one replacement field'
+    Purchase Taxes and Charges:
+      item_wise_tax_detail: moved from a JSON column to the Item Wise Tax Detail table (the document's item_wise_tax_details field)
+    Quotation:
+      campaign: replaced by utm_campaign; no migration patch copies the old value, so copy existing data yourself
+      source: replaced by utm_source; no migration patch copies the old value, so copy existing data yourself
+    Repost Allowed Types:
+      allowed: removed in v16 (no replacement found in the migration patches)
+    Sales Invoice:
+      campaign: replaced by utm_campaign; no migration patch copies the old value, so copy existing data yourself
+      source: replaced by utm_source; no migration patch copies the old value, so copy existing data yourself
+    Sales Order:
+      source: replaced by utm_source; no migration patch copies the old value, so copy existing data yourself
+      campaign: replaced by utm_campaign; no migration patch copies the old value, so copy existing data yourself
+    Sales Taxes and Charges:
+      item_wise_tax_detail: moved from a JSON column to the Item Wise Tax Detail table (the document's item_wise_tax_details field)
+    Serial No:
+      purchase_document_no: replaced by reference_name (with reference_doctype)
+    Stock Entry Detail:
+      is_scrap_item: replaced by valuation_type (the scrap flag became a Valuation Rate method)
+    Stock Settings:
+      default_warehouse: moved to Company.default_warehouse
+      sample_retention_warehouse: moved to Company.sample_retention_warehouse
+    Subcontracting Receipt Item:
+      is_scrap_item: replaced by valuation_type (the scrap flag became a Valuation Rate method)
+      scrap_cost_per_qty: renamed to secondary_items_cost_per_qty
+    Tax Withholding Category:
+      consider_party_ledger_amount: removed in v16 (no replacement found in the migration patches)
+    Transaction Deletion Record:
+      delete_bin_data: removed in v16 (no replacement found in the migration patches)
+      delete_leads_and_addresses: removed in v16 (no replacement found in the migration patches)
+      clear_notifications: removed in v16 (no replacement found in the migration patches)
+      reset_company_default_values: removed in v16 (no replacement found in the migration patches)
+      delete_transactions: removed in v16 (no replacement found in the migration patches)
+      initialize_doctypes_table: removed in v16 (no replacement found in the migration patches)
+    Workstation:
+      hour_rate_electricity: moved into the workstation_costs table (components Electricity, Consumables, Rent, Wages)
+      hour_rate_consumable: moved into the workstation_costs table (components Electricity, Consumables, Rent, Wages)
+      hour_rate_rent: moved into the workstation_costs table (components Electricity, Consumables, Rent, Wages)
+      hour_rate_labour: moved into the workstation_costs table (components Electricity, Consumables, Rent, Wages)
+    Workstation Type:
+      hour_rate_electricity: moved into the workstation_costs table (components Electricity, Consumables, Rent, Wages)
+      hour_rate_consumable: moved into the workstation_costs table (components Electricity, Consumables, Rent, Wages)
+      hour_rate_rent: moved into the workstation_costs table (components Electricity, Consumables, Rent, Wages)
+      hour_rate_labour: moved into the workstation_costs table (components Electricity, Consumables, Rent, Wages)
+message: >
+  A field that no longer exists on this DocType in v16 is read, filtered on or written. Reading it can fail with an unknown-field error or quietly return nothing. The detail line says what replaced it.
+replacement: >
+  Use the replacement named in the detail line. Where it only says removed, read the v16 DocType and port the logic; do not redesign it.
+fix: before
+autofix: none
+confidence: high
+references:
+  - "verified: DocType JSON diff of erpnext version-15 vs version-16 (fields of data type only)"
+  - "replacements verified against erpnext version-16 patches (rename_field calls and move patches); fields marked removed have no patch evidence"
+  - "BWH ERPNext Upgrade Playbook, section 'API Changes: Fields & functions that moved'"

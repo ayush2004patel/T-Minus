@@ -1,0 +1,54 @@
+id: v16-removed-doctypes
+title: DocTypes removed in v16
+target: v16
+app: frappe
+severity: error
+category: quiet
+stage: T-30
+match:
+  type: doctype_name
+  names:
+    Advance Tax: removed; tax withholding was rebuilt around Tax Withholding Entry
+    BOM Scrap Item: replaced by BOM Secondary Item (secondary_item_type 'Scrap')
+    Blog Category: moved to the separate app frappe/blog
+    Blog Post: moved to the separate app frappe/blog
+    Blog Settings: moved to the separate app frappe/blog
+    Blogger: moved to the separate app frappe/blog
+    Changelog Feed: removed in v16 (no replacement)
+    Closing Stock Balance: replaced by Stock Closing Balance and Stock Closing Entry
+    Dropbox Settings: moved to the separate app frappe/offsite_backups
+    S3 Backup Settings: moved to the separate app frappe/offsite_backups
+    Google Drive: part of the backup integrations, moved to the separate app frappe/offsite_backups
+    Energy Point Log: moved to the separate app frappe/eps
+    Energy Point Rule: moved to the separate app frappe/eps
+    Energy Point Settings: moved to the separate app frappe/eps
+    Review Level: moved to the separate app frappe/eps
+    Homepage: removed in v16 (no replacement)
+    Homepage Section: removed in v16 (no replacement)
+    Homepage Section Card: removed in v16 (no replacement)
+    Interview Round: merged into Interview Type
+    Job Card Scrap Item: replaced by Job Card Secondary Item (secondary_item_type 'Scrap')
+    Lead Source: replaced by UTM Source
+    Marketing Campaign: renamed to UTM Campaign
+    Newsletter: moved to the separate app frappe/newsletter
+    Newsletter Attachment: moved to the separate app frappe/newsletter
+    Newsletter Email Group: moved to the separate app frappe/newsletter
+    Repost Accounting Ledger Settings: merged into Accounts Settings (repost settings)
+    Tax Withheld Vouchers: replaced by Tax Withholding Entry
+    Transaction Log: removed in v16 with no replacement app
+    Upload Attendance: removed in v16 (HRMS patch delete_upload_attendance_doctype)
+message: >
+  A DocType that no longer exists in v16 is passed to a Frappe API (get_doc, get_all,
+  db.get_value, qb.DocType, ...) or used in a dict with a "doctype" key. The code keeps
+  working until someone opens that form or runs that code path. If the DocType moved to a
+  separate app, this is fine as long as that app is installed on the v16 bench.
+replacement: >
+  Use the replacement named in the detail line, or install the separate app and suppress
+  the finding with a tminus ignore comment.
+fix: before
+autofix: none
+confidence: medium
+references:
+  - "https://github.com/frappe/frappe/wiki/Migrating-to-version-16 (Separating modules from frappe into new apps; Transaction Log)"
+  - "BWH ERPNext Upgrade Playbook, section 'App Splits'"
+  - "verified: DocType JSON diff of frappe, erpnext and hrms version-15 vs version-16 (29 DocTypes gone everywhere; SMS Log and Print Heading only moved between apps and are not listed)"

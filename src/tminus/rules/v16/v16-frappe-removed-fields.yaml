@@ -1,0 +1,59 @@
+id: v16-frappe-removed-fields
+title: Frappe framework fields removed in v16
+target: v16
+app: frappe
+severity: error
+category: quiet
+stage: T-30
+match:
+  type: doctype_field
+  doctypes:
+    Communication:
+      comment_type: removed in v16 (no replacement found in the migration patches)
+      rating: removed in v16 (no replacement found in the migration patches)
+      feedback_request: removed in v16 (no replacement found in the migration patches)
+    Data Import:
+      show_failed_logs: removed in v16 (no replacement found in the migration patches)
+    Desktop Icon:
+      module_name: removed in v16 (no replacement found in the migration patches)
+      custom: removed in v16 (no replacement found in the migration patches)
+      description: removed in v16 (no replacement found in the migration patches)
+      category: removed in v16 (no replacement found in the migration patches)
+      blocked: removed in v16 (no replacement found in the migration patches)
+      force_show: removed in v16 (no replacement found in the migration patches)
+      type: removed in v16 (no replacement found in the migration patches)
+      _doctype: removed in v16 (no replacement found in the migration patches)
+      _report: removed in v16 (no replacement found in the migration patches)
+      color: removed in v16 (no replacement found in the migration patches)
+      reverse: removed in v16 (no replacement found in the migration patches)
+    Email Queue:
+      unsubscribe_param: v16 has unsubscribe_params; check how it is used
+    List View Settings:
+      total_fields: removed in v16 (no replacement found in the migration patches)
+    Module Onboarding:
+      subtitle: removed in v16 (no replacement found in the migration patches)
+      success_message: removed in v16 (no replacement found in the migration patches)
+      documentation_url: removed in v16 (no replacement found in the migration patches)
+    Notification:
+      notification_title: removed in v16 (no replacement found in the migration patches)
+      notification_message: removed in v16 (no replacement found in the migration patches)
+    Notification Settings:
+      enable_email_energy_point: belongs to Energy Points, now the separate app frappe/eps
+      energy_points_system_notifications: belongs to Energy Points, now the separate app frappe/eps
+    System Settings:
+      allow_older_web_view_links: removed in v16 (no replacement found in the migration patches)
+    Webhook:
+      preview_document: removed in v16 (no replacement found in the migration patches)
+      preview_request_body: removed in v16 (no replacement found in the migration patches)
+      meets_condition: removed in v16 (no replacement found in the migration patches)
+    Website Settings:
+      navbar_search: removed in v16 (no replacement found in the migration patches)
+message: >
+  A field that no longer exists on this DocType in v16 is read, filtered on or written. Reading it can fail with an unknown-field error or quietly return nothing. The detail line says what replaced it.
+replacement: >
+  Use the replacement named in the detail line. Where it only says removed, read the v16 DocType and port the logic; do not redesign it.
+fix: before
+autofix: none
+confidence: high
+references:
+  - "verified: DocType JSON diff of frappe version-15 vs version-16 (fields of data type only)"

@@ -20,9 +20,10 @@ def scan_source(source: str, filename: str, rules: Iterable[Rule]) -> list[Findi
         matcher = MATCHERS.get(rule.match.type)
         if matcher is None:  # app-level rule types are handled by scanners/hooks.py
             continue
-        for lineno in matcher(ctx, rule):
-            text = lines[lineno - 1] if 0 < lineno <= len(lines) else ""
-            if rule.id in ignored_ids(text):  # suppressed by comment
-                continue
-            findings.append(Finding.from_rule(rule, filename, lineno, text))
+            for hit in matcher(ctx, rule):
+                lineno = hit.line
+                text = lines[lineno - 1] if 0 < lineno <= len(lines) else ""
+                if rule.id in ignored_ids(text):  # suppressed by comment
+                    continue
+                findings.append(Finding.from_rule(rule, filename, lineno, text, hit.detail))
     return sorted(findings, key=lambda f: (f.file, f.line, f.rule_id))
