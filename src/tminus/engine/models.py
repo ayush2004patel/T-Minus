@@ -63,6 +63,7 @@ class CallMatch(StrictModel):
             raise ValueError("first_arg_named needs `names`")
         return self
 
+
 class DoctypeFieldMatch(StrictModel):
     """Fields that were removed or renamed, per DocType, with a note on what replaced them."""
 
@@ -88,6 +89,7 @@ Match = Annotated[
     Field(discriminator="type"),
 ]
 
+
 class Rule(StrictModel):
     """One breaking change, loaded from one YAML file."""
 
@@ -106,11 +108,13 @@ class Rule(StrictModel):
     confidence: Confidence = "high"
     references: list[str] = Field(default_factory=list)
 
+
 class Hit(StrictModel):
     """One place a matcher found: a line number and optional extra context."""
 
     line: int
     detail: str = ""
+
 
 class Finding(StrictModel):
     """One place in the scanned code that a rule matched."""

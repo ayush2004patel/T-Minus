@@ -1,6 +1,7 @@
 # Code that must produce no findings.
 import json
 import importlib
+import frappe
 
 try:
     import imp  # guarded: the except clause catches ImportError
@@ -23,3 +24,10 @@ try:
     from hrms.payroll.doctype.employee_benefit_application.employee_benefit_application import get_max_benefits
 except ImportError:  # compat pattern: v16 no longer has it
     get_max_benefits = None
+
+frappe.db.get_single_value("Company", "accounts_frozen_till_date")  # new location
+frappe.get_all("Asset", fields=["name", "net_purchase_amount"])  # new name
+invoice = frappe.get_doc("Sales Invoice", "SINV-1")
+invoice.utm_source = "Website"  # new field
+frappe.db.get_value("Issue", "ISS-1", "source")  # same field name on a DocType where it still exists
+label = "Lead Source"  # a plain string is not passed to a Frappe API

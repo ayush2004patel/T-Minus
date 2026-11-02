@@ -39,7 +39,8 @@ class FileContext:
                 path = resolve(node, aliases)
                 if path is not None:
                     attr_paths.append((node.lineno, path))
-                field_refs, doctype_refs = collect_refs(tree, aliases, calls)
+
+        field_refs, doctype_refs = collect_refs(tree, aliases, calls)
         return cls(
             tree,
             aliases,
