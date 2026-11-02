@@ -5,6 +5,7 @@ from __future__ import annotations
 import ast
 from dataclasses import dataclass
 
+from tminus.engine.frappe_refs import FieldRef, collect_refs
 from tminus.engine.guards import guarded_ranges
 from tminus.engine.names import build_alias_table, resolve
 
@@ -19,6 +20,8 @@ class FileContext:
     from_imports: list[ast.ImportFrom]
     calls: list[tuple[ast.Call, str | None]]  # each call and the dotted path it calls
     attr_paths: list[tuple[int, str]]  # (line, dotted path) of resolvable attribute chains
+    field_refs: list[FieldRef]  # (doctype, field name, line) where the doctype is known
+    doctype_refs: list[tuple[str, int]]  # (doctype name, line) used as a DocType argument
 
     @classmethod
     def build(cls, tree: ast.AST) -> FileContext:
@@ -36,4 +39,14 @@ class FileContext:
                 path = resolve(node, aliases)
                 if path is not None:
                     attr_paths.append((node.lineno, path))
-        return cls(tree, aliases, guarded_ranges(tree), from_imports, calls, attr_paths)
+                field_refs, doctype_refs = collect_refs(tree, aliases, calls)
+        return cls(
+            tree,
+            aliases,
+            guarded_ranges(tree),
+            from_imports,
+            calls,
+            attr_paths,
+            field_refs,
+            doctype_refs,
+        )
