@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import NamedTuple
 
 from tminus.engine.names import resolve
+from tminus.engine.sql_refs import sql_refs, sql_text
 
 
 class FieldRef(NamedTuple):
@@ -16,6 +17,7 @@ class FieldRef(NamedTuple):
     doctype: str
     name: str
     line: int
+    via: str = ""  # how it was found: "" (code), "sql" (inside SQL text) or "hook" (hook parameter)
 
 
 @dataclass(frozen=True)
@@ -61,6 +63,9 @@ DOC_FACTORIES = {
     "frappe.get_last_doc",
     "frappe.get_single",
 }
+
+# frappe.qb.DocType("X") builds a query-builder table whose attributes are X's fields.
+QB_FACTORIES = {"frappe.qb.DocType"}
 
 # Calls whose first argument is a DocType name.
 DOCTYPE_FIRST_ARG_APIS = (
@@ -161,7 +166,10 @@ def _dict_doctype(node: ast.Dict) -> str | None:
 
 def _factory_doctype(call: ast.Call, aliases: dict[str, str]) -> str | None:
     """The DocType returned by frappe.get_doc("X", ...) and similar calls."""
-    if resolve(call.func, aliases) not in DOC_FACTORIES or not call.args:
+    func = call.func
+    if isinstance(func, ast.Attribute) and func.attr == "as_" and isinstance(func.value, ast.Call):
+        return _factory_doctype(func.value, aliases)  # frappe.qb.DocType("X").as_("x")
+    if resolve(func, aliases) not in DOC_FACTORIES | QB_FACTORIES or not call.args:
         return None
     first = call.args[0]
     if isinstance(first, ast.Dict):
@@ -182,9 +190,9 @@ def _scope_nodes(scope: ast.AST) -> list[ast.AST]:
 
 
 def _typed_variables(
-    scope: ast.AST, nodes: list[ast.AST], aliases: dict[str, str]
+    scope: ast.AST, nodes: list[ast.AST], aliases: dict[str, str], seed: dict[str, str]
 ) -> dict[str, str]:
-    """Variables that hold exactly one known DocType's document in this scope."""
+    """Variables that hold one known DocType's document; `seed` adds known parameters."""
     assigned: dict[str, set[str]] = {}
     unknown: set[str] = set()  # names also assigned from something we cannot type
     for node in nodes:
@@ -206,11 +214,15 @@ def _typed_variables(
         args = scope.args
         params = {a.arg for a in [*args.posonlyargs, *args.args, *args.kwonlyargs]}
         params |= {a.arg for a in (args.vararg, args.kwarg) if a is not None}
-    return {
+    typed = {
         name: next(iter(types))
         for name, types in assigned.items()
         if len(types) == 1 and name not in unknown and name not in params
     }
+    for name, doctype in seed.items():  # a seeded name is dropped if the code reassigns it
+        if name not in assigned and name not in unknown:
+            typed[name] = doctype
+    return typed
 
 
 def _doc_doctype(expr: ast.expr, variables: dict[str, str], aliases: dict[str, str]) -> str | None:
@@ -222,10 +234,10 @@ def _doc_doctype(expr: ast.expr, variables: dict[str, str], aliases: dict[str, s
     return None
 
 
-def _scope_refs(scope: ast.AST, aliases: dict[str, str]) -> list[FieldRef]:
+def _scope_refs(scope: ast.AST, aliases: dict[str, str], seed: dict[str, str]) -> list[FieldRef]:
     """Field references through typed documents inside one scope."""
     nodes = _scope_nodes(scope)
-    variables = _typed_variables(scope, nodes, aliases)
+    variables = _typed_variables(scope, nodes, aliases, seed)
     refs: list[FieldRef] = []
     for node in nodes:
         if isinstance(node, ast.Attribute):  # doc.field
@@ -271,10 +283,23 @@ def collect_refs(
     scopes: list[ast.AST] = [tree]
     scopes += [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef)]
     for scope in scopes:
-        field_refs += _scope_refs(scope, aliases)
-    for node in ast.walk(tree):  # `{"doctype": "X"}` anywhere names a DocType
-        if isinstance(node, ast.Dict):
+        field_refs += _scope_refs(scope, aliases, {})
+    consumed: set[int] = set()  # string pieces already merged into a larger SQL string
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Dict):  # `{"doctype": "X"}` anywhere names a DocType
             doctype = _dict_doctype(node)
             if doctype:
                 doctype_refs.append((doctype, node.lineno))
+        if isinstance(node, ast.Constant | ast.JoinedStr | ast.BinOp) and id(node) not in consumed:
+            text = sql_text(node, consumed)
+            if text and "tab" in text:  # cheap pre-filter before the SQL regexes
+                found = sql_refs(text, node.lineno)
+                field_refs += [FieldRef(d, f, line, "sql") for d, f, line in found]
     return field_refs, doctype_refs
+
+
+def function_refs(func: ast.AST, aliases: dict[str, str], seed: dict[str, str]) -> list[FieldRef]:
+    """Field references made through the seeded variables (e.g. a hook's `doc` argument)."""
+    plain = set(_scope_refs(func, aliases, {}))  # what the per-file pass already finds
+    seeded = set(_scope_refs(func, aliases, seed))
+    return [r._replace(via="hook") for r in sorted(seeded - plain)]
