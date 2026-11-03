@@ -2,8 +2,25 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 from tminus.engine.context import FileContext
+from tminus.engine.frappe_refs import FieldRef
 from tminus.engine.models import DoctypeFieldMatch, DoctypeNameMatch, Hit, Rule
+
+SQL_NOTE = "  [found in SQL text: check that the column belongs to this table]"
+
+
+def field_hits(match: DoctypeFieldMatch, refs: Iterable[FieldRef]) -> list[Hit]:
+    """Turn field references into hits for the fields a rule lists as removed."""
+    hits: dict[tuple[int, str], Hit] = {}
+    for ref in refs:
+        note = match.doctypes.get(ref.doctype, {}).get(ref.name)
+        if note is None:
+            continue
+        detail = f"{ref.doctype}.{ref.name}: {note}" + (SQL_NOTE if ref.via == "sql" else "")
+        hits[(ref.line, detail)] = Hit(line=ref.line, detail=detail)  # one hit per line and field
+    return sorted(hits.values(), key=lambda h: (h.line, h.detail))
 
 
 def match_doctype_field(ctx: FileContext, rule: Rule) -> list[Hit]:
@@ -11,13 +28,7 @@ def match_doctype_field(ctx: FileContext, rule: Rule) -> list[Hit]:
     match = rule.match
     if not isinstance(match, DoctypeFieldMatch):  # wrong rule type for this matcher
         return []
-    hits: dict[tuple[int, str], Hit] = {}
-    for ref in ctx.field_refs:
-        note = match.doctypes.get(ref.doctype, {}).get(ref.name)
-        if note is not None:
-            hit = Hit(line=ref.line, detail=f"{ref.doctype}.{ref.name}: {note}")
-            hits[(hit.line, hit.detail)] = hit  # one finding per line and field
-    return sorted(hits.values(), key=lambda h: (h.line, h.detail))
+    return field_hits(match, ctx.field_refs)
 
 
 def match_doctype_name(ctx: FileContext, rule: Rule) -> list[Hit]:
