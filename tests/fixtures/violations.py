@@ -4,8 +4,8 @@ import cgi
 from imp import reload
 import distutils.core
 import telnetlib
-import frappe
 
+# --- call rules
 from erpnext.stock.utils import get_batch_incoming_rate  # removed in v16
 import erpnext.stock.get_item_details as gid
 from erpnext.controllers import taxes_and_totals
@@ -17,6 +17,9 @@ gid.get_item_tax_map("Chai Co", "GST 5%")  # positional call: v16 is keyword-onl
 taxes_and_totals.get_itemised_tax(doc.taxes)  # v16 takes the document
 validate_party_frozen_disabled("Customer", "CUST-0001")  # v16 needs company first
 
+# --- field and DocType rules
+import frappe
+
 frappe.db.get_single_value("Accounts Settings", "acc_frozen_upto")  # moved to Company
 frappe.get_all("Asset", fields=["name", "gross_purchase_amount"])  # renamed
 asset = frappe.get_doc("Asset", "AST-0001")
@@ -24,3 +27,10 @@ asset.gross_purchase_amount = 10  # renamed
 frappe.db.get_value("Communication", "COM-1", "rating")  # frappe field removed
 frappe.db.get_value("Salary Slip", "SAL-1", "deduct_tax_for_unclaimed_employee_benefits")  # hrms
 frappe.get_doc("Lead Source", "Website")  # DocType removed
+
+# --- SQL text and query builder
+query = """
+    SELECT q.name, q.source FROM `tabQuotation` q WHERE q.docstatus = 1
+"""  # Quotation.source was removed (SQL text)
+quotation = frappe.qb.DocType("Quotation")
+source_column = quotation.source  # query-builder attribute on a removed field
