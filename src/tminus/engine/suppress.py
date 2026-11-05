@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-_IGNORE_RE = re.compile(r"#\s*tminus:\s*ignore\[([^\]]*)\]")
+_IGNORE_RE = re.compile(r"(?:#|//)\s*tminus:\s*ignore\[([^\]]*)\]")  # Python/Jinja or JavaScript
 
 
 def ignored_ids(line: str) -> set[str]:

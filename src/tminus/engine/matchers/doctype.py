@@ -31,15 +31,20 @@ def match_doctype_field(ctx: FileContext, rule: Rule) -> list[Hit]:
     return field_hits(match, ctx.field_refs)
 
 
-def match_doctype_name(ctx: FileContext, rule: Rule) -> list[Hit]:
-    """Flag DocTypes that no longer exist when they are passed to a Frappe API."""
-    match = rule.match
-    if not isinstance(match, DoctypeNameMatch):  # wrong rule type for this matcher
-        return []
+def name_hits(match: DoctypeNameMatch, refs: Iterable[tuple[str, int]]) -> list[Hit]:
+    """Turn DocType-name references into hits for the DocTypes a rule lists as removed."""
     hits: dict[tuple[int, str], Hit] = {}
-    for name, line in ctx.doctype_refs:
+    for name, line in refs:
         note = match.names.get(name)
         if note is not None:
             hit = Hit(line=line, detail=f"{name}: {note}")
             hits[(hit.line, hit.detail)] = hit
     return sorted(hits.values(), key=lambda h: (h.line, h.detail))
+
+
+def match_doctype_name(ctx: FileContext, rule: Rule) -> list[Hit]:
+    """Flag DocTypes that no longer exist when they are passed to a Frappe API."""
+    match = rule.match
+    if not isinstance(match, DoctypeNameMatch):  # wrong rule type for this matcher
+        return []
+    return name_hits(match, ctx.doctype_refs)

@@ -267,9 +267,14 @@ def _scope_refs(scope: ast.AST, aliases: dict[str, str], seed: dict[str, str]) -
 
 
 def collect_refs(
-    tree: ast.AST, aliases: dict[str, str], calls: list[tuple[ast.Call, str | None]]
+    tree: ast.AST,
+    aliases: dict[str, str],
+    calls: list[tuple[ast.Call, str | None]],
+    seed: dict[str, str] | None = None,
 ) -> tuple[list[FieldRef], list[tuple[str, int]]]:
-    """All field references and DocType-name references in a file."""
+    """All field references and DocType-name references in a file.
+    `seed` names variables of known DocType at module level (e.g. `doc` in a print format).
+    """
     field_refs: list[FieldRef] = []
     doctype_refs: list[tuple[str, int]] = []
     for call, path in calls:
@@ -283,7 +288,7 @@ def collect_refs(
     scopes: list[ast.AST] = [tree]
     scopes += [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef)]
     for scope in scopes:
-        field_refs += _scope_refs(scope, aliases, {})
+        field_refs += _scope_refs(scope, aliases, (seed or {}) if scope is tree else {})
     consumed: set[int] = set()  # string pieces already merged into a larger SQL string
     for node in ast.walk(tree):
         if isinstance(node, ast.Dict):  # `{"doctype": "X"}` anywhere names a DocType
