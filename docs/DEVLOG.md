@@ -12,6 +12,13 @@ Newest first. One entry per working session or logical change. Records what chan
 - Open: <anything unfinished or risky>
 ```
 
+## 2026-11-04 — M1.6 Print Formats and client JavaScript
+- New: engine/{jinja_refs,js_refs,ref_rules}.py, scanners/{js_ast,print_format}.py, tests/{test_js_refs,test_print_formats}.py
+- Edited: runner.py (JS and print format passes), frappe_refs.py (seed), matchers/doctype.py (name_hits), suppress.py (// comments), pyproject.toml (tree-sitter)
+- Why: client scripts and print formats reach fields through frm.doc / doc, not through get_doc.
+- Tests: 176 passed. ERPNext v15: 82 genuine JS findings; v16 sources: only stale upstream leftovers.
+- Open: shared controllers (this.frm.doc), child rows in print formats, DB-stored print formats and client scripts, other Jinja (Notification, Email Template).
+
 ## 2026-10-31 — M1.3 call matcher
 - Changed (new): engine/{guards,names,context}.py, engine/matchers/call.py, 6 rules in rules/v16/ (get-batch-incoming-rate, get-item-tax-map, get-itemised-tax, validate-party-frozen-disabled, hrms get-max-benefits, tax-withholding helpers), tests/{test_names,test_call_matcher}.py
 - Changed (edited): models.py (CallMatch), matchers/__init__.py, matchers/import_path.py, scanners/python_ast.py (FileContext), tests/test_loader.py, fixtures
