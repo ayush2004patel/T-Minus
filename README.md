@@ -45,6 +45,3 @@ tminus scan tests/fixtures/violations.py --target v16   # try the scanner
 
 Layout: `src/tminus/` (code), `src/tminus/rules/<target>/` (YAML rules), `tests/` (tests + fixtures), `docs/` (design).
 
-## Credits
-
-Design draws on kaulith/preflight (MIT), the BWH *ERPNext Upgrade Playbook*, and the Frappe wiki *Migrating to version 16*.
