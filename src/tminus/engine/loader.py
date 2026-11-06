@@ -7,7 +7,7 @@ from pathlib import Path
 import yaml
 from pydantic import ValidationError
 
-from tminus.engine.models import Rule
+from tminus.engine.models import Rule, TargetInfo
 
 RULES_DIR = Path(__file__).resolve().parent.parent / "rules"  # rules ship inside the package
 
@@ -41,3 +41,15 @@ def load_rules(target: str, rules_dir: Path | None = None) -> list[Rule]:
             raise RuleLoadError(f"{path.name}: target '{rule.target}' is not '{target}'")
         rules.append(rule)
     return rules
+
+
+def load_target(target: str, rules_dir: Path | None = None) -> TargetInfo:
+    """Load rules/<target>/target.yaml (environment requirements and metadata)."""
+    folder = (rules_dir or RULES_DIR) / target
+    if not folder.is_dir():
+        raise UnknownTargetError(f"unknown target: {target}")
+    path = folder / "target.yaml"
+    try:
+        return TargetInfo.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))
+    except (OSError, yaml.YAMLError, ValidationError) as exc:
+        raise RuleLoadError(f"{path.name}: {exc}") from exc

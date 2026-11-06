@@ -9,6 +9,7 @@ from tminus.engine.models import Finding, Rule, ScanResult
 from tminus.engine.paths import is_skipped
 from tminus.engine.scanners.hooks import scan_hooks
 from tminus.engine.scanners.js_ast import scan_js
+from tminus.engine.scanners.packaging import scan_packaging
 from tminus.engine.scanners.print_format import scan_print_formats
 from tminus.engine.scanners.python_ast import scan_source
 
@@ -68,4 +69,10 @@ def scan_path(root: Path, rules: list[Rule]) -> ScanResult:
     pf_findings, pf_notes, pf_count = scan_print_formats(root, rules)  # pass 4: print formats
     findings.extend(pf_findings)
     skipped.extend(pf_notes)
-    return ScanResult(findings=findings, skipped=skipped, files_scanned=count + pf_count)
+
+    pkg_findings, pkg_notes, pkg_count = scan_packaging(root, rules)  # pass 5: app packaging
+    findings.extend(pkg_findings)
+    skipped.extend(pkg_notes)
+    return ScanResult(
+        findings=findings, skipped=skipped, files_scanned=count + pf_count + pkg_count
+    )

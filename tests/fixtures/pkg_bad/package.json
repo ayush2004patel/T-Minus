@@ -1,0 +1,4 @@
+{
+  "name": "chaico_pkg",
+  "engines": { "node": "<=20" }
+}

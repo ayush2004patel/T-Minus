@@ -8,7 +8,8 @@ from pathlib import Path
 import typer
 
 from tminus import __version__
-from tminus.engine.loader import RuleLoadError, UnknownTargetError, load_rules
+from tminus.engine.env_check import check_environment, format_rows, run_command
+from tminus.engine.loader import RuleLoadError, UnknownTargetError, load_rules, load_target
 from tminus.engine.models import SEVERITY_ORDER
 from tminus.engine.runner import scan_path
 from tminus.report.render import render_json, render_text
@@ -82,3 +83,21 @@ def scan(
         threshold = SEVERITY_ORDER[fail_on.value]
         if any(SEVERITY_ORDER[f.severity] >= threshold for f in result.findings):
             raise typer.Exit(EXIT_FINDINGS)
+
+
+@app.command()
+def env(
+    path: Path = typer.Argument(Path("."), help="Bench folder (used to read its Python version)."),
+    target: str = typer.Option(..., "--target", help="Version to check against, e.g. v16."),
+) -> None:
+    """T-30: compare Python, Node, MariaDB and Redis on this machine with what the target needs."""
+    try:
+        info = load_target(target)
+    except UnknownTargetError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(EXIT_USAGE) from exc
+    except RuleLoadError as exc:
+        typer.echo(f"invalid target file: {exc}", err=True)
+        raise typer.Exit(EXIT_FAILED) from exc
+    rows = check_environment(info.requirements, run_command, path if path.is_dir() else None)
+    typer.echo(format_rows(rows, target))

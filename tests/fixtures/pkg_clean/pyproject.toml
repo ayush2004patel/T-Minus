@@ -1,0 +1,7 @@
+[project]
+name = "chaico_ok"
+requires-python = ">=3.10"
+dependencies = ["requests>=2", "Werkzeug>=3"]
+
+[tool.bench.frappe-dependencies]
+frappe = ">=16.0.0,<17.0.0"

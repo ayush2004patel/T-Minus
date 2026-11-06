@@ -1,7 +1,7 @@
 """Data models for rules, findings and scan results."""
 
 from __future__ import annotations
-
+from datetime import date
 from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -78,6 +78,27 @@ class DoctypeNameMatch(StrictModel):
     names: dict[str, str] = Field(min_length=1)  # doctype -> note
 
 
+class PackageMatch(StrictModel):
+    """Checks on an app's packaging files (pyproject.toml, setup.py, requirements.txt, ...)."""
+
+    type: Literal["package"]
+    check: Literal[
+        "requires_python", "frappe_bound", "frappe_bound_missing", "node_engine", "dependency_pins"
+    ]
+    versions: list[str] = Field(default_factory=list)  # flag when the app's range rejects all
+    pins: dict[str, str] = Field(default_factory=dict)  # dependency_pins: name -> frappe's pin
+
+    @model_validator(mode="after")
+    def _check_extra_fields(self) -> Self:
+        """Make sure each check comes with the data it needs."""
+        needs_versions = {"requires_python", "frappe_bound", "node_engine"}
+        if self.check in needs_versions and not self.versions:
+            raise ValueError(f"{self.check} needs `versions`")
+        if self.check == "dependency_pins" and not self.pins:
+            raise ValueError("dependency_pins needs `pins`")
+        return self
+
+
 # All match types; the `type` key decides which model validates the YAML.
 Match = Annotated[
     ImportPathMatch
@@ -85,9 +106,28 @@ Match = Annotated[
     | HookClassMatch
     | CallMatch
     | DoctypeFieldMatch
-    | DoctypeNameMatch,
+    | DoctypeNameMatch
+    | PackageMatch,
     Field(discriminator="type"),
 ]
+
+
+class RequirementSpec(StrictModel):
+    """One environment requirement of a target version (Python, Node, MariaDB, Redis)."""
+
+    minimum: str
+    below: str | None = None  # exclusive upper bound, e.g. Python < 3.15
+    recommended: str | None = None
+    source: str = ""
+
+
+class TargetInfo(StrictModel):
+    """Contents of rules/<target>/target.yaml."""
+
+    target: str
+    checked_on: date | None = None
+    note: str = ""
+    requirements: dict[str, RequirementSpec] = Field(default_factory=dict)
 
 
 class Rule(StrictModel):

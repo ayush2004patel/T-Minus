@@ -1,0 +1,4 @@
+[project]
+name = "chaico_nb"
+requires-python = ">=3.10"
+dependencies = []

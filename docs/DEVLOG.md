@@ -12,6 +12,13 @@ Newest first. One entry per working session or logical change. Records what chan
 - Open: <anything unfinished or risky>
 ```
 
+## 2026-11-04 — M1.7 bench and app compatibility
+- New: engine/{versions,app_packaging,env_check}.py, scanners/packaging.py, 5 rules v16-app-*, fixtures pkg_*, tests/{test_versions,test_packaging,test_env_check}.py
+- Edited: models.py (PackageMatch, TargetInfo), loader.py (load_target), runner.py (pass 5), cli/main.py (env), target.yaml (requirements), render.py
+- Why: an app whose python/frappe/pins/node ranges exclude v16 cannot be installed on a v16 bench. Facts verified in frappe 16.54.0, erpnext/hrms v15+v16 and bench source.
+- Tests: 236 passed. ERPNext v15 flagged (frappe bound, pycountry pin); ERPNext v16 and HRMS v16 clean.
+- Open: frappe pins go stale when v16 is updated (regenerate); required_apps / version-16 branch existence needs --online; symlinked app folders are not followed.
+
 ## 2026-11-04 — M1.6 Print Formats and client JavaScript
 - New: engine/{jinja_refs,js_refs,ref_rules}.py, scanners/{js_ast,print_format}.py, tests/{test_js_refs,test_print_formats}.py
 - Edited: runner.py (JS and print format passes), frappe_refs.py (seed), matchers/doctype.py (name_hits), suppress.py (// comments), pyproject.toml (tree-sitter)
