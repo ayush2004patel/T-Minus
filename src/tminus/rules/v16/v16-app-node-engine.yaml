@@ -1,0 +1,21 @@
+id: v16-app-node-engine
+title: App's Node range excludes Node 24
+target: v16
+app: frappe
+severity: warning
+category: loud
+stage: T-30
+match:
+  type: package
+  check: node_engine
+  versions: ["24"]
+message: >
+  package.json says the app needs a Node version that excludes Node 24, which Frappe v16 requires (engines node >=24). Building the app's assets on a v16 bench can fail or warn.
+replacement: >
+  Widen engines.node on the version-16 branch (for example ">=18") or drop the field.
+fix: before
+autofix: none
+confidence: medium
+references:
+  - "BWH ERPNext Upgrade Playbook, section 'The Environment' (Node 24)"
+  - "verified: frappe 16.54.0 package.json engines node >=24; its CI uses Node 24"

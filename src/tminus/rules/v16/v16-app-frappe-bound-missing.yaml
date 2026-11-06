@@ -1,0 +1,20 @@
+id: v16-app-frappe-bound-missing
+title: App does not declare which frappe versions it supports
+target: v16
+app: frappe
+severity: warning
+category: quiet
+stage: T-30
+match:
+  type: package
+  check: frappe_bound_missing
+message: >
+  The app has no [tool.bench.frappe-dependencies] frappe entry in pyproject.toml. bench prints 'Required frappe version not set in pyproject.toml' and cannot stop the app from being installed on a frappe version it does not support.
+replacement: >
+  Add to pyproject.toml on the version-16 branch: [tool.bench.frappe-dependencies] with frappe = ">=16.0.0,<17.0.0".
+fix: before
+autofix: none
+confidence: high
+references:
+  - "verified: bench/app.py get_required_frappe_version (yellow warning when the bound is missing)"
+  - "bench issue 1524"

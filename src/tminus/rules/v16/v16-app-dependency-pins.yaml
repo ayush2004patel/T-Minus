@@ -1,0 +1,102 @@
+id: v16-app-dependency-pins
+title: App pins a dependency that frappe v16 pins differently
+target: v16
+app: frappe
+severity: warning
+category: loud
+stage: T-30
+match:
+  type: package
+  check: dependency_pins
+  pins:
+    a2wsgi: "~=1.10.10"
+    babel: "~=2.18.0"
+    beautifulsoup4: "~=4.13.5"
+    bleach-allowlist: "~=1.0.3"
+    chardet: "~=5.2.0"
+    click: "~=8.4.1"
+    croniter: "~=6.0.0"
+    cryptography: "~=50.0.0"
+    cssutils: "~=2.11.1"
+    distro: "~=1.9.0"
+    duckdb: "~=1.4.3"
+    email-reply-parser: "~=0.5.12"
+    filelock: "~=3.20.1"
+    filetype: "~=1.2.0"
+    gitpython: "~=3.1.45"
+    google-api-python-client: "~=2.188.0"
+    google-auth: "~=2.48.0"
+    google-auth-oauthlib: "~=1.2.4"
+    hiredis: "~=3.3.0"
+    html5lib: "~=1.1"
+    httpx: "~=0.28.1"
+    ipython: "~=8.37.0"
+    jinja2: "~=3.1.6"
+    ldap3: "~=2.9.1"
+    markdown2: "~=2.5.4"
+    markdownify: "~=1.2.2"
+    markupsafe: "~=3.0.3"
+    mysqlclient: "==2.2.7"
+    nh3: "~=0.3.2"
+    num2words: "~=0.5.14"
+    oauthlib: "~=4.0.0"
+    openpyxl: "~=3.1.5"
+    orjson: "~=3.11.5"
+    passlib: "~=1.7.4"
+    pdfkit: "~=1.0.0"
+    phonenumbers: "~=9.0.23"
+    pillow: "~=13.0.0"
+    premailer: "~=3.10.0"
+    psutil: "~=7.0.0"
+    psycopg2-binary: "~=2.9.11"
+    pyarrow: "~=25.0.0"
+    pycountry: "~=24.6.1"
+    pydantic: "~=2.12.5"
+    pydyf: "==0.12.1"
+    pyjwt: "~=2.15.0"
+    pymysql: "==1.1.2"
+    pyopenssl: "~=26.4.0"
+    pyotp: "~=2.9.0"
+    pypdf: "==6.19.0"
+    pyqrcode: "~=1.2.1"
+    python-dateutil: "~=2.9.0.post0"
+    python-engineio: "~=4.14.0"
+    python-socketio: "~=5.17.0"
+    pytz: "==2025.2"
+    pyyaml: "~=6.0.3"
+    rauth: "~=0.7.3"
+    redis: "~=7.1.0"
+    requests: "~=2.33.0"
+    requests-oauthlib: "~=2.0.0"
+    restrictedpython: "~=8.5"
+    rq: "==2.6.1"
+    rsa: "~=4.9.1"
+    semantic-version: "~=2.10.0"
+    sentry-sdk: "~=1.45.1"
+    sql-metadata: "~=3.0.1"
+    sqlparse: "~=0.6.0"
+    tenacity: "~=9.1.2"
+    terminaltables: "~=3.1.10"
+    traceback-with-variables: "~=2.2.1"
+    typing-extensions: "<5,>=4.15.0"
+    typst: "~=0.15.0"
+    tzdata: "~=2026.5"
+    uvicorn: "~=0.54.0"
+    vobject: "~=0.9.9"
+    weasyprint: "==70.0"
+    websockets: "~=15.0.1"
+    werkzeug: "==3.1.9"
+    whoosh: "~=2.7.4"
+    xlrd: "~=2.0.2"
+    xlsxwriter: "~=3.2.9"
+    zxcvbn: "~=4.5.0"
+message: >
+  A dependency of this app has a version range that no release can satisfy together with the version frappe v16 requires. pip reports a conflict and the app cannot be installed next to frappe v16. The comparison tests the versions named in both ranges and their neighbours, so it can miss an exotic overlap.
+replacement: >
+  Loosen the app's pin (or move to the version frappe uses) on the version-16 branch.
+fix: before
+autofix: none
+confidence: medium
+references:
+  - "verified: frappe 16.54.0 pyproject.toml dependencies (URL dependencies are skipped)"
+  - "pins go stale when frappe v16 is updated; regenerate them from its pyproject.toml"

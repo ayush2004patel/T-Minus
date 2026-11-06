@@ -1,3 +1,18 @@
 target: v16
-checked_on: 2026-10-30
-note: starter rule set; entries come from docs/v16-change-catalog.md and still need source verification
+checked_on: 2026-11-04
+note: rule set built from the Frappe wiki, the BWH playbook and a diff of frappe, erpnext and hrms version-15 vs version-16
+requirements:
+  python:
+    minimum: "3.14"
+    below: "3.15"
+    source: "frappe 16.54.0 pyproject.toml (requires-python >=3.14,<3.15); its CI uses Python 3.14"
+  node:
+    minimum: "24"
+    source: "frappe 16.54.0 package.json (engines node >=24); its CI uses Node 24"
+  mariadb:
+    minimum: "10.6"
+    recommended: "11.8"
+    source: "BWH playbook (10.6+, 11.8 recommended); frappe 16.54.0 CI uses mariadb:11.8"
+  redis:
+    minimum: "6"
+    source: "BWH playbook (Redis 6+)"

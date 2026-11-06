@@ -1,6 +1,7 @@
 """Data models for rules, findings and scan results."""
 
 from __future__ import annotations
+
 from datetime import date
 from typing import Annotated, Literal, Self
 

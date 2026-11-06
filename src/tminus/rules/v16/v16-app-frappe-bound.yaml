@@ -1,0 +1,21 @@
+id: v16-app-frappe-bound
+title: App's frappe bound excludes every v16 release
+target: v16
+app: frappe
+severity: error
+category: loud
+stage: T-30
+match:
+  type: package
+  check: frappe_bound
+  versions: ["16.0.0", "16.50.0", "16.99.0"]
+message: >
+  [tool.bench.frappe-dependencies] says this app needs a frappe release that no v16 version satisfies (for example "<16.0.0"). bench warns that the installed frappe 'does not satisfy required version', and bench validate-dependencies exits with an error.
+replacement: >
+  On the app's version-16 branch set the bound to v16 (for example frappe = ">=16.0.0,<17.0.0"), after porting the code.
+fix: before
+autofix: none
+confidence: high
+references:
+  - "verified: bench/app.py validate_dependency (warning, and exit 1 under `bench validate-dependencies`)"
+  - "verified: erpnext version-15 declares frappe >=15.111.0,<16.0.0; version-16 declares >=16.50.0,<17.0.0"

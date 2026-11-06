@@ -1,0 +1,22 @@
+id: v16-app-requires-python
+title: App declares a Python range that excludes 3.14
+target: v16
+app: frappe
+severity: error
+category: loud
+stage: T-30
+match:
+  type: package
+  check: requires_python
+  versions: ["3.14"]
+message: >
+  The app's requires-python (or python_requires in setup.py) excludes Python 3.14. Frappe v16 itself requires Python >=3.14,<3.15, so pip refuses to install this app into a v16 bench.
+replacement: >
+  Widen the range on the app's version-16 branch (for example ">=3.10"); do not cap it below 3.15 unless frappe does.
+fix: before
+autofix: none
+confidence: high
+references:
+  - "BWH ERPNext Upgrade Playbook, section 'The Environment' (Python 3.14)"
+  - "verified: frappe 16.54.0 pyproject.toml requires-python >=3.14,<3.15; its CI uses Python 3.14"
+  - "pip, not bench, enforces requires-python"
