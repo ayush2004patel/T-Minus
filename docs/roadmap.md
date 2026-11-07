@@ -1,44 +1,43 @@
 # Roadmap
 
-## M0 — Foundations (done 2026-10-30)
-- Repo, pyproject (`uv`), `typer` CLI skeleton, pydantic rule loader, report model, `pytest` + fixtures, CI.
-- Rule schema v1, `target.yaml`, rule-coverage test.
+Release pattern: ship a focused v1, then release often. Each release adds one stage or one
+capability; nothing ships half-built.
 
-## M1 — T-30 static scan (in progress: import_path, hook_function done) (parity with Preflight on v16 frappe/ERPNext core)
-- Python `ast` scanner; matchers: import_path, call, hook_key, doctype, doctype_field, select_field, override_subclass, returns_none, undeclared_import.
-- Bench/app compatibility rules; `--online` checks.
-- Output: text, json, sarif, html, md; `--baseline`; ignore comments.
-- Port v16 catalog (frappe + ERPNext) with proof links.
+## v1.0 — T-30 static scanner (target: 7 days)
 
-## M2 — Beyond Preflight on scanning
-- tree-sitter JS/TS/Vue; Jinja (Print Formats, Email Templates); expression fields.
-- Site-saved code scanner incl. Print Formats.
-- HRMS + payments + india_compliance rule sets.
-- Catalog items marked NEW.
+Already built (M0–M1.7): Python, JavaScript, Jinja print formats, hooks, SQL text, removed
+fields and DocTypes, app packaging checks, `tminus env`, 236 tests, rules verified against
+frappe, erpnext and hrms version-15 vs version-16 source.
 
-## M3 — T-14 data checks
-- Read-only DB connector; `sql_check`, `field_clash`, `site_record`.
-- Invalid JSON, extracted-app row counts, clashes, Country code, holiday list assignment gaps.
+| Day | Work |
+|---|---|
+| 1 | `--baseline` and a summary grouped by stage and severity |
+| 2 | SARIF and HTML report |
+| 3 | Run on a real app (`precision_mass`); fix false positives, speed, gaps |
+| 4 | Missing wiki rules, each verified against framework source |
+| 5 | README quickstart, docs, CHANGELOG, LICENSE, PyPI name check |
+| 6 | Release workflow, wheel, tag `v1.0.0`, GitHub release |
+| 7 | Buffer, demo script, `v1.0.1` fixes |
 
-## M4 — T-7 trial migrate
-- Bench wrapper (restore/migrate/tee), copy-only guard, log classifier, clean-twice gate.
+Definition of done for v1.0: `pytest`, `ruff`, `mypy --strict` green in CI; a clean install
+from the built wheel runs `tminus scan` and `tminus env`; the README states plainly what is
+and is not checked.
 
-## M5 — Frappe app (thin)
-- `tminus_app`: Scan/Finding doctypes, enqueue core, dashboard page.
+## After v1.0
 
-## M6 — T-3 differential
-- Snapshot probes (permission matrix, report outputs, list order); diff engine; smoke test runner.
+| Release | Content |
+|---|---|
+| v1.1 | T-14 data checks (read-only database): invalid JSON, removed-DocType row counts, custom field clashes, holiday list assignments; scan code stored in the database |
+| v1.2 | T-7 migrate runner and log analyzer: classify failures, clean-twice gate, table-survival comparison |
+| v1.3 | T-1 rehearsal timing and T-0 cutover checklist |
+| v2.0 | Thin Frappe app, T-3 differential tests (permission matrix, report numbers), `fix --apply` codemods, `rules generate` |
 
-## M7 — T-1 / T-0
-- Rehearsal timing, rollback checklist, cutover go/no-go report.
-
-## M8 — Automation
-- `fix --apply` codemods (safe rules only), `rules generate`, MCP server for agents.
-
-## Later
-- v17 rule set; other frameworks (idea only).
+## Ongoing
+- Keep the v16 rule set current with the Frappe wiki and releases (regenerate the frappe pins).
+- `--online` checks (required apps have a version-16 branch).
+- v17 rule set.
+- Other frameworks: idea only.
 
 ## Open items
-- Name availability on PyPI/GitHub/Frappe app name (unchecked).
-- Final tagline.
-- Verify every catalog entry against framework source before shipping a rule.
+- PyPI name availability for `tminus` (unchecked).
+- Optional: follow symlinked app folders.

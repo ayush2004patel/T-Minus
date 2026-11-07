@@ -30,7 +30,7 @@ Plus: `tminus report` (html / json / sarif / md), `tminus fix` (opt-in codemods)
 
 ## Status
 
-M0 done: package skeleton, rule loader, one starter rule, `tminus scan`. See `docs/roadmap.md`.
+v1.0 in progress: the T-30 static scanner is complete (M0–M1.7). See docs/roadmap.md.
 
 ## Development
 
