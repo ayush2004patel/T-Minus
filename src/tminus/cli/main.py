@@ -8,6 +8,7 @@ from pathlib import Path
 import typer
 
 from tminus import __version__
+from tminus.engine.baseline import BaselineError, apply_baseline, load_baseline, write_baseline
 from tminus.engine.env_check import check_environment, format_rows, run_command
 from tminus.engine.loader import RuleLoadError, UnknownTargetError, load_rules, load_target
 from tminus.engine.models import SEVERITY_ORDER
@@ -59,8 +60,17 @@ def scan(
     target: str = typer.Option(..., "--target", help="Version to check against, e.g. v16."),
     fmt: OutputFormat = typer.Option(OutputFormat.text, "--format", help="Report format."),
     fail_on: FailOn = typer.Option(FailOn.error, "--fail-on", help="Lowest severity that fails."),
+    baseline: Path | None = typer.Option(
+        None, "--baseline", help="Hide findings already in this baseline (or JSON report)."
+    ),
+    save_baseline: Path | None = typer.Option(
+        None, "--write-baseline", help="Save the current findings as a baseline and exit 0."
+    ),
 ) -> None:
     """T-30: static scan of code for breaking changes (read-only)."""
+    if baseline is not None and save_baseline is not None:
+        typer.echo("use either --baseline or --write-baseline, not both", err=True)
+        raise typer.Exit(EXIT_USAGE)
     try:
         rules = load_rules(target)
         result = scan_path(path, rules)
@@ -73,6 +83,17 @@ def scan(
     except RuleLoadError as exc:  # a broken rule file is a tool bug, not a usage error
         typer.echo(f"invalid rule: {exc}", err=True)
         raise typer.Exit(EXIT_FAILED) from exc
+
+    if save_baseline is not None:
+        count = write_baseline(result, path, save_baseline, target)
+        typer.echo(f"Wrote a baseline of {count} findings to {save_baseline}")
+        return
+    if baseline is not None:
+        try:
+            result = apply_baseline(result, load_baseline(baseline, path), path)
+        except BaselineError as exc:
+            typer.echo(str(exc), err=True)
+            raise typer.Exit(EXIT_USAGE) from exc
 
     report = (
         render_json(result, target) if fmt is OutputFormat.json else render_text(result, target)

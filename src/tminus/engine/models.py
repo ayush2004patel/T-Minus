@@ -194,3 +194,4 @@ class ScanResult(StrictModel):
     findings: list[Finding] = Field(default_factory=list)
     skipped: list[str] = Field(default_factory=list)  # "file: reason" lines
     files_scanned: int = 0
+    baselined: int = 0  # findings hidden because they are in the baseline
