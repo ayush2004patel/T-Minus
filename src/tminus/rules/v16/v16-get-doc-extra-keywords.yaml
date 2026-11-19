@@ -1,0 +1,28 @@
+id: v16-get-doc-extra-keywords
+title: frappe.get_doc(doctype, name, field=value)
+target: v16
+app: frappe
+severity: warning
+category: silent
+stage: T-30
+match:
+  type: call
+  check: keywords_not_in
+  count: 2
+  names: [for_update, check_permission]
+  paths:
+    - frappe.get_doc
+message: >
+  frappe.get_doc("DocType", "name", field=value) used the extra keywords to overwrite
+  field values of the loaded document in v15. The v16 signature accepts only
+  for_update and check_permission after (doctype, name), so the values are no longer
+  applied.
+replacement: >
+  Load the document first and set the values explicitly (doc.field = value, or
+  doc.update({...})).
+fix: before
+autofix: none
+confidence: medium
+references:
+  - "https://github.com/frappe/frappe/wiki/Migrating-to-version-16"
+  - "verified: frappe 16.54.0 get_doc signature (doctype, name, /, *, for_update, check_permission)"

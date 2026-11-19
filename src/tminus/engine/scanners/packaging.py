@@ -7,11 +7,10 @@ from pathlib import Path
 
 from tminus.engine.app_packaging import AppPackaging, Where, read_app
 from tminus.engine.models import Finding, PackageMatch, Rule
+from tminus.engine.paths import UPSTREAM_APPS
 from tminus.engine.scanners.hooks import find_hooks_files
 from tminus.engine.suppress import ignored_ids
 from tminus.engine.versions import node_allows, spec_allows, specs_conflict
-
-UPSTREAM_APPS = {"frappe", "erpnext", "hrms"}  # installed from their own version-16 branch
 
 
 def _rejects_all(spec: str, versions: list[str], allows: object = spec_allows) -> bool:

@@ -38,6 +38,9 @@ def _is_old_style(call: ast.Call, match: CallMatch) -> bool:
     if match.check == "positional_count":  # v16 added a required argument
         starred = any(isinstance(a, ast.Starred) for a in call.args)
         return len(call.args) == match.count and not starred and not call.keywords
+    if match.check == "keywords_not_in":  # keyword arguments the new signature rejects
+        extra = any(k.arg is not None and k.arg not in match.names for k in call.keywords)
+        return len(call.args) >= (match.count or 0) and extra
     if match.check == "first_arg_named":  # first argument changed meaning
         first = _name_of(call.args[0]) if call.args else None
         return first in match.names or any(k.arg in match.names for k in call.keywords)

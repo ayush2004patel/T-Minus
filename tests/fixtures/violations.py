@@ -34,3 +34,9 @@ query = """
 """  # Quotation.source was removed (SQL text)
 quotation = frappe.qb.DocType("Quotation")
 source_column = quotation.source  # query-builder attribute on a removed field
+
+
+# --- query syntax and get_doc keywords
+frappe.get_all("Stock Ledger Entry", fields=["sum(actual_qty) as qty"])  # SQL function string
+latest_invoice = frappe.get_all("Sales Invoice", filters={"customer": "C"})[0]  # no order_by
+frappe.get_doc("Sales Invoice", "SINV-1", ignore_permissions=True)  # extra keyword

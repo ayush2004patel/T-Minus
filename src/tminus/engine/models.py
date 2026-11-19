@@ -35,7 +35,7 @@ class HookFunctionMatch(StrictModel):
 
     type: Literal["hook_function"]
     hook: str
-    check: Literal["returns_none", "unreadable"]
+    check: Literal["returns_none", "unreadable", "commits"]
 
 
 class HookClassMatch(StrictModel):
@@ -51,7 +51,9 @@ class CallMatch(StrictModel):
 
     type: Literal["call"]
     paths: list[str] = Field(min_length=1)  # every import path that reaches the function
-    check: Literal["removed", "keyword_only", "positional_count", "first_arg_named"]
+    check: Literal[
+        "removed", "keyword_only", "positional_count", "first_arg_named", "keywords_not_in"
+    ]
     count: int | None = None  # positional_count: flag calls with exactly this many arguments
     names: list[str] = Field(default_factory=list)  # first_arg_named: old parameter names
 
@@ -62,6 +64,8 @@ class CallMatch(StrictModel):
             raise ValueError("positional_count needs `count`")
         if self.check == "first_arg_named" and not self.names:
             raise ValueError("first_arg_named needs `names`")
+        if self.check == "keywords_not_in" and (not self.names or self.count is None):
+            raise ValueError("keywords_not_in needs `names` (allowed keywords) and `count`")
         return self
 
 
@@ -77,6 +81,20 @@ class DoctypeNameMatch(StrictModel):
 
     type: Literal["doctype_name"]
     names: dict[str, str] = Field(min_length=1)  # doctype -> note
+
+
+class HookDefinedMatch(StrictModel):
+    """Hooks that v16 no longer reads: defining one in hooks.py has no effect."""
+
+    type: Literal["hook_defined"]
+    hooks: dict[str, str] = Field(min_length=1)  # hook name -> note
+
+
+class QuerySyntaxMatch(StrictModel):
+    """Checks on frappe.get_all / get_list calls."""
+
+    type: Literal["query_syntax"]
+    check: Literal["sql_strings", "first_row_unordered"]
 
 
 class PackageMatch(StrictModel):
@@ -108,7 +126,9 @@ Match = Annotated[
     | CallMatch
     | DoctypeFieldMatch
     | DoctypeNameMatch
-    | PackageMatch,
+    | PackageMatch
+    | HookDefinedMatch
+    | QuerySyntaxMatch,
     Field(discriminator="type"),
 ]
 

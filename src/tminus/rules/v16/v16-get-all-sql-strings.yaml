@@ -1,0 +1,23 @@
+id: v16-get-all-sql-strings
+title: SQL written as a string in get_all / get_list fields or filters
+target: v16
+app: frappe
+severity: error
+category: quiet
+stage: T-30
+match:
+  type: query_syntax
+  check: sql_strings
+message: >
+  frappe.get_all / get_list in v16 accept only plain field names in `fields` and plain
+  field names as filter keys. SQL written as a string (sum(x) as y, distinct x,
+  ifnull(...), a quoted literal) raises a ValidationError when the query runs.
+replacement: >
+  Use the dict syntax for SQL functions, for example {"COUNT": "*"}, or frappe.qb for
+  a complex query. In filters, filter on a plain field name.
+fix: before
+autofix: none
+confidence: high
+references:
+  - "https://github.com/frappe/frappe/wiki/query-builder-migration"
+  - "verified: frappe 16.54.0 database/query.py _validate_select_field (functions and invalid formats raise) and _validate_and_prepare_filter_field (only plain names without parentheses)"

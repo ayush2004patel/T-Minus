@@ -38,3 +38,9 @@ query_ok = """
     SELECT q.name, q.utm_source FROM `tabQuotation` q WHERE q.docstatus = 1
 """
 issue_query = "SELECT i.source FROM `tabIssue` i WHERE i.status = 'source'"  # Issue.source exists
+
+
+# --- query syntax and get_doc keywords: plain fields, explicit order, allowed keywords
+frappe.get_all("Stock Ledger Entry", fields=["item_code", "actual_qty as qty"])
+latest_ok = frappe.get_all("Sales Invoice", filters={"customer": "C"}, order_by="creation desc")[0]
+frappe.get_doc("Sales Invoice", "SINV-1", for_update=True)

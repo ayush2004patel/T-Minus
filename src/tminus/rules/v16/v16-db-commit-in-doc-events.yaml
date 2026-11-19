@@ -1,0 +1,26 @@
+id: v16-db-commit-in-doc-events
+title: frappe.db.commit() inside a doc_events hook
+target: v16
+app: frappe
+severity: error
+category: silent
+stage: T-30
+match:
+  type: hook_function
+  hook: doc_events
+  check: commits
+message: >
+  A function registered in doc_events calls frappe.db.commit(). v16 turns transaction
+  control off while document hooks run, so the commit only prints a warning and is
+  ignored. Anything the code relied on being saved at that point stays in the open
+  transaction and is rolled back if the request fails later.
+replacement: >
+  Remove the commit and let the request commit at the end. If the data must survive a
+  failure, write it in a separate background job (frappe.enqueue).
+fix: before
+autofix: none
+confidence: high
+references:
+  - "https://github.com/frappe/frappe/wiki/Migrating-to-version-16"
+  - "verified: frappe 16.54.0 model/document.py (hooks run with db._disable_transaction_control) and database/database.py commit() (warns and returns); v15 has no such flag"
+  - "limits: only commits written directly in the hook function; helper functions it calls are not followed"

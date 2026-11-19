@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+UPSTREAM_APPS = {"frappe", "erpnext", "hrms"}  # installed from their own version-16 branch
 SKIP_DIRS = {".git", "node_modules", "env", ".venv", "venv", "__pycache__", "dist", "build"}
 
 

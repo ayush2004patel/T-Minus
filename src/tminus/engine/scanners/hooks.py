@@ -11,9 +11,16 @@ from tminus.engine.frappe_refs import FieldRef, function_refs
 from tminus.engine.matchers.doctype import field_hits
 from tminus.engine.matchers.returns_none import can_return_none
 from tminus.engine.matchers.subclass import has_external_base
-from tminus.engine.models import DoctypeFieldMatch, Finding, HookClassMatch, HookFunctionMatch, Rule
-from tminus.engine.names import build_alias_table
-from tminus.engine.paths import is_skipped
+from tminus.engine.models import (
+    DoctypeFieldMatch,
+    Finding,
+    HookClassMatch,
+    HookDefinedMatch,
+    HookFunctionMatch,
+    Rule,
+)
+from tminus.engine.names import build_alias_table, resolve
+from tminus.engine.paths import UPSTREAM_APPS, is_skipped
 from tminus.engine.suppress import ignored_ids
 
 ParseCache = dict[Path, tuple[list[str], ast.Module] | None]
@@ -195,8 +202,36 @@ def _line(lines: list[str], number: int) -> str:
     return lines[number - 1] if 0 < number <= len(lines) else ""
 
 
-def _apply_rule(rule: Rule, ctx: HookContext) -> Finding | None:
-    """Apply one hook rule to one hook entry; returns a finding or None."""
+def _commit_findings(rule: Rule, ctx: HookContext) -> list[Finding]:
+    """One finding for each frappe.db.commit() call inside a doc_events function."""
+    located = ctx.located
+    if located is None or not isinstance(located.node, _FUNCTIONS):
+        return []
+    aliases = build_alias_table(located.tree)
+    entry = ctx.entry
+    where = f'{ctx.hook}["{entry.key}"]' + (f'["{entry.event}"]' if entry.event else "")
+    detail = f"{where} -> {entry.dotted} (hooks.py:{entry.line})"
+    def_text = _line(located.lines, located.node.lineno)
+    found: list[Finding] = []
+    for node in ast.walk(located.node):
+        if isinstance(node, ast.Call) and resolve(node.func, aliases) == "frappe.db.commit":
+            text = _line(located.lines, node.lineno)
+            if rule.id not in ignored_ids(text) | ignored_ids(def_text):
+                found.append(Finding.from_rule(rule, str(located.file), node.lineno, text, detail))
+    return found
+
+
+def _apply_rule(rule: Rule, ctx: HookContext) -> list[Finding]:
+    """Apply one hook rule to one hook entry; returns its findings."""
+    match = rule.match
+    if isinstance(match, HookFunctionMatch) and match.check == "commits":
+        return _commit_findings(rule, ctx) if match.hook == ctx.hook else []
+    finding = _apply_single_rule(rule, ctx)
+    return [finding] if finding is not None else []
+
+
+def _apply_single_rule(rule: Rule, ctx: HookContext) -> Finding | None:
+    """Apply a rule that gives at most one finding per hook entry."""
     match = rule.match
     if not isinstance(match, HookFunctionMatch | HookClassMatch) or match.hook != ctx.hook:
         return None
@@ -308,14 +343,39 @@ def _typed_hook_findings(
     return list(findings.values())
 
 
+def _defined_hook_findings(
+    hooks_path: Path, hooks_lines: list[str], tree: ast.Module, rules: list[Rule]
+) -> list[Finding]:
+    """Findings for hooks.py assignments of hooks that v16 no longer reads."""
+    found: list[Finding] = []
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        for target in node.targets:
+            if not isinstance(target, ast.Name):
+                continue
+            for rule in rules:
+                match = rule.match
+                if not isinstance(match, HookDefinedMatch) or target.id not in match.hooks:
+                    continue
+                text = _line(hooks_lines, node.lineno)
+                if rule.id not in ignored_ids(text):
+                    detail = f"{target.id}: {match.hooks[target.id]}"
+                    found.append(
+                        Finding.from_rule(rule, str(hooks_path), node.lineno, text, detail)
+                    )
+    return found
+
+
 def scan_hooks(root: Path, rules: Iterable[Rule]) -> tuple[list[Finding], list[str]]:
     """Apply hook rules; returns findings plus notes about what was not checked."""
     rules = list(rules)
     hook_rules = [r for r in rules if isinstance(r.match, HookFunctionMatch | HookClassMatch)]
     field_rules = [r for r in rules if isinstance(r.match, DoctypeFieldMatch)]
+    defined_rules = [r for r in rules if isinstance(r.match, HookDefinedMatch)]
     findings: list[Finding] = []
     notes: list[str] = []
-    if not hook_rules and not field_rules:
+    if not hook_rules and not field_rules and not defined_rules:
         return findings, notes
     cache: ParseCache = {}
     hook_names = sorted(
@@ -332,17 +392,22 @@ def scan_hooks(root: Path, rules: Iterable[Rule]) -> tuple[list[Finding], list[s
         hooks_lines, tree = parsed
         if field_rules:
             findings += _typed_hook_findings(hooks_path, tree, field_rules, cache, notes)
+        if defined_rules and hooks_path.parent.name not in UPSTREAM_APPS:
+            findings += _defined_hook_findings(hooks_path, hooks_lines, tree, defined_rules)
         for hook in hook_names:
             try:
-                entries = read_hook_entries(tree, hook)
+                entries = (
+                    read_doc_events(tree)[0]
+                    if hook == "doc_events"
+                    else read_hook_entries(tree, hook)
+                )
             except NotLiteralError:
-                notes.append(f"{hooks_path}: {hook} is not a literal dict, not checked")
+                if hook != "doc_events":  # the typed pass already reports an unreadable doc_events
+                    notes.append(f"{hooks_path}: {hook} is not a literal dict, not checked")
                 continue
             for entry in entries:
                 located = _locate(hooks_path.parent, entry.dotted, cache)
                 ctx = HookContext(hooks_path, hooks_lines, hook, entry, located)
                 for rule in hook_rules:
-                    finding = _apply_rule(rule, ctx)
-                    if finding is not None:
-                        findings.append(finding)
+                    findings.extend(_apply_rule(rule, ctx))
     return sorted(findings, key=lambda f: (f.file, f.line, f.rule_id)), notes

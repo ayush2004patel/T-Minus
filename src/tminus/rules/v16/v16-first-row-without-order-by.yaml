@@ -1,0 +1,25 @@
+id: v16-first-row-without-order-by
+title: First or last row taken from a query without order_by
+target: v16
+app: frappe
+severity: info
+category: silent
+stage: T-30
+match:
+  type: query_syntax
+  check: first_row_unordered
+message: >
+  The first or last row of a get_all/get_list result is used ([0], [-1] or limit 1)
+  and the query has no order_by. v15 sorted by modified when no order was given and
+  v16 sorts by creation, so "the latest record" logic can return a different row.
+  Nothing raises an error. Review each finding: it only matters when more than one
+  row can match.
+replacement: >
+  Add an explicit order_by (for example order_by="creation desc") so the result does
+  not depend on the default order.
+fix: before
+autofix: none
+confidence: low
+references:
+  - "https://github.com/frappe/frappe/wiki/Migrating-to-version-16 (default sort order changed from modified to creation)"
+  - "heuristic: direct [0] / [-1] on the call, on a variable assigned from it in the same function, or limit 1; skipped when the call is only tested for emptiness or filters on `name`"

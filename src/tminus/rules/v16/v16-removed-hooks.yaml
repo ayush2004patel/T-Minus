@@ -1,0 +1,24 @@
+id: v16-removed-hooks
+title: Hooks that v16 no longer reads
+target: v16
+app: frappe
+severity: warning
+category: silent
+stage: T-30
+match:
+  type: hook_defined
+  hooks:
+    leaderboards: no longer read by anything in v16, so the definition is ignored
+    get_changelog_feed: no longer read by anything in v16 (Changelog Feed was removed), so the definition is ignored
+    advance_payment_doctypes: replaced by advance_payment_receivable_doctypes and advance_payment_payable_doctypes
+message: >
+  hooks.py defines a hook that v16 code no longer reads. The definition stays in the
+  file but has no effect, and nothing reports it.
+replacement: >
+  Remove it, or move to the replacement named in the detail line.
+fix: before
+autofix: none
+confidence: high
+references:
+  - "verified: frappe/erpnext version-15 read these hooks with get_hooks(); frappe, erpnext and hrms version-16 do not"
+  - "verified: erpnext version-16 reads advance_payment_receivable_doctypes and advance_payment_payable_doctypes"

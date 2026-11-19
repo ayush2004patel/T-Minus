@@ -333,11 +333,14 @@ class _Scan:
             )
             if inner is not None and self.matches_locals(node, inner, env.cd):
                 return ("doc", env.cd[2])
-        elif node.type == "call_expression" and env.cd:  # frappe.get_doc(cdt, cdn)
-            if self.dotted(node.child_by_field_name("function")) == "frappe.get_doc":
-                arguments = [self.text(a) for a in self.args(node)]
-                if arguments[:2] == [env.cd[0], env.cd[1]]:
-                    return ("doc", env.cd[2])
+        elif (
+            node.type == "call_expression"
+            and env.cd
+            and self.dotted(node.child_by_field_name("function")) == "frappe.get_doc"
+        ):  # frappe.get_doc(cdt, cdn)
+            arguments = [self.text(a) for a in self.args(node)]
+            if arguments[:2] == [env.cd[0], env.cd[1]]:
+                return ("doc", env.cd[2])
         return None
 
     def matches_locals(self, outer: Node, inner: Node, cd: tuple[str, str, str]) -> bool:
