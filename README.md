@@ -1,47 +1,87 @@
 # T-MINUS
 
-> Count down to a clean upgrade.
+> Count down to a clean Frappe/ERPNext upgrade.
 
-T-MINUS prepares a Frappe/ERPNext site for a major-version upgrade (v1 target: **v15 → v16**).
-It scans code, site data and customisations, rehearses the migration on a restored copy,
-compares v15 against v16 behaviour, and produces a readiness report for every stage of the countdown.
+T-MINUS is a read-only command line scanner that finds what will break (or silently
+change) when you upgrade a Frappe/ERPNext app from **v15 to v16**, before you migrate.
 
-**Read-only by default.** Nothing is modified on a site, a bench or in your code unless you
-explicitly run `tminus fix --apply`.
+It reads your app's source, never your site, and never changes anything.
 
-## Countdown
+## Install
 
-| Stage | Command | What it does |
-|---|---|---|
-| T-30 | `tminus scan` | Static scan: custom apps, patches, site-saved code (Server/Client Scripts, Reports, Print Formats, ...), customisations, bench and app compatibility |
-| T-14 | `tminus data` | Read-only data checks: invalid JSON columns, row counts for doctypes that leave the framework, custom-field clashes, records v16 reads differently |
-| T-7  | `tminus trial` | Trial migrate on a restored copy, full log analysis, failures classified |
-| T-3  | `tminus diff` | Differential tests v15 vs v16: permission matrix, report numbers, list order, smoke tests |
-| T-1  | `tminus rehearse` | Timed dry run on a fresh backup, rollback plan check |
-| T-0  | `tminus cutover` | Cutover checklist and go/no-go summary |
+```bash
+git clone <this repository> && cd tminus
+python3 -m venv .venv && . .venv/bin/activate
+pip install -e .
+```
 
-Plus: `tminus report` (html / json / sarif / md), `tminus fix` (opt-in codemods),
-`tminus rules generate` (candidate rules from a branch diff).
+Python 3.12 or newer is needed to run the tool (it analyses code, it does not run it).
 
-## Packages
+## Use
 
-- `tminus` — core Python package and CLI. Runs anywhere, including CI with no bench (`--path`).
-- `tminus_app` — thin Frappe app. Desk UI, stored scan history, and the runtime checks that need a live Frappe (permission matrix, report execution).
+```bash
+tminus scan path/to/your_app --target v16       # scan an app (or a whole bench apps/ folder)
+tminus env path/to/bench --target v16           # compare Python, Node, MariaDB, Redis with v16's needs
+```
 
-## Status
+Options of `scan`:
 
-v1.0 in progress: the T-30 static scanner is complete (M0–M1.7). See docs/roadmap.md.
+| Option | Meaning |
+|---|---|
+| `--format text` / `json` | Human report (default) or machine-readable JSON |
+| `--fail-on error` / `warning` / `info` / `never` | Lowest severity that gives exit code 1 (default `error`) |
+| `--write-baseline FILE` | Save today's findings and exit 0 |
+| `--baseline FILE` | Hide findings already in the baseline; only new ones count |
+
+Exit codes: `0` clean, `1` findings at or above `--fail-on`, `2` usage error, `3` scan could not run.
+
+Silence one finding with a comment on its line: `# tminus: ignore[rule-id]` (Python, Jinja
+`{# ... #}`, `pyproject.toml`) or `// tminus: ignore[rule-id]` (JavaScript).
+
+## What it checks (stage T-30)
+
+| Area | Examples |
+|---|---|
+| Python | removed stdlib modules (Python 3.14), removed or changed ERPNext/HRMS functions, `get_all` with SQL strings, `frappe.db.commit()` in `doc_events`, `get_doc(..., field=value)`, `has_permission` hooks that can return `None`, `override_doctype_class` that does not subclass |
+| Fields and DocTypes | fields removed or moved (for example `acc_frozen_upto`, `gross_purchase_amount`), removed DocTypes, in Python, SQL text, query-builder variables, hook parameters |
+| Client code | `frm.doc.field`, `frm.set_value(...)`, `frappe.db.get_value(...)` and similar in JavaScript; `{{ doc.field }}` in print formats |
+| Hooks | hooks v16 no longer reads (`leaderboards`, `advance_payment_doctypes`, ...) |
+| Packaging | `requires-python`, `frappe-dependencies` bound, dependency pins that conflict with Frappe v16, Node range |
+
+Every rule is a YAML file in `src/tminus/rules/v16/` with the evidence it was built from. The
+rules were checked against the real `frappe`, `erpnext` and `hrms` version-15 and version-16
+source, and they do not fire on v16's own application code.
+
+Findings are classified as **data**, **loud** (fails during migrate), **quiet** (fails when
+the code runs) or **silent** (runs but behaves differently).
+
+## What it does not check (yet)
+
+A clean report means "no known problems", not "safe to upgrade".
+
+- Your site's data (invalid JSON, custom field clashes, rows of removed DocTypes) and code
+  stored in the database (Client Scripts, Server Scripts, Print Formats saved on the site)
+- `bench migrate` itself (log analysis) and rehearsal timing
+- Differences in behaviour between a v15 and a v16 site (permissions, report numbers)
+- JavaScript in shared controller classes, child-table rows in print formats
+
+See [docs/roadmap.md](docs/roadmap.md) for what comes next.
 
 ## Development
 
 ```bash
-python3 -m venv .venv && . .venv/bin/activate   # create and enter a virtual env
-pip install -e ".[dev]"                          # install tminus + dev tools
-pytest                                           # run tests
-ruff check . && ruff format --check .            # lint and formatting
-mypy                                             # type check
-tminus scan tests/fixtures/violations.py --target v16   # try the scanner
+pip install -e ".[dev]"
+ruff check . && ruff format --check . && mypy && pytest
 ```
 
-Layout: `src/tminus/` (code), `src/tminus/rules/<target>/` (YAML rules), `tests/` (tests + fixtures), `docs/` (design).
+To add a rule, see [docs/rule-schema.md](docs/rule-schema.md): a rule is one YAML file, and
+`tests/test_rule_coverage.py` fails until it has a violating and a clean example.
 
+## Credits
+
+Design inspired by [kaulith/preflight](https://github.com/kaulith/preflight) (MIT), the BWH
+*ERPNext Upgrade Playbook*, and the Frappe wiki *Migrating to version 16*.
+
+## License
+
+MIT
