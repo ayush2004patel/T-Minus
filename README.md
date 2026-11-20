@@ -77,11 +77,6 @@ ruff check . && ruff format --check . && mypy && pytest
 To add a rule, see [docs/rule-schema.md](docs/rule-schema.md): a rule is one YAML file, and
 `tests/test_rule_coverage.py` fails until it has a violating and a clean example.
 
-## Credits
-
-Design inspired by [kaulith/preflight](https://github.com/kaulith/preflight) (MIT), the BWH
-*ERPNext Upgrade Playbook*, and the Frappe wiki *Migrating to version 16*.
-
 ## License
 
 MIT
