@@ -1,32 +1,38 @@
 # Source verification log
 
-Which source says what, and where they disagree. Fetched 2026-10-30.
+Every rule is built from evidence, not memory. This records what each group was checked against.
 
-| Source | Version / date | Verified |
-|---|---|---|
-| Frappe wiki "Migrating to version 16" | last edited 2026-08-17, 31 revisions | read in full |
-| Preflight `docs/rules.md` | rules checked 2026-10-25 vs frappe v16.53.0 (113 rules: 77 frappe+bench, 36 ERPNext) | read in full |
-| Preflight `docs/overview.md` | same | read in full |
-| Preflight `docs/writing-a-rule.md` | - | read earlier; not re-read |
-| Preflight `getting-started`, `reading-a-report`, `upgrade-checklist`, source code | - | not read |
-| BWH ERPNext Upgrade Playbook (PDF) | v15 -> v16 | read in full (user upload) |
+## Sources
 
-## Confirmed
-- Python 3.14+ and Node 24+ (wiki, PF `v16-bench-python`, `v16-bench-node`).
-- PF has no rule for: `db.commit()` in hooks, `db.get_value` single-doctype casting, JS IIFE loading, POST-only methods, `sendmail(now=True)`, `get_doc(field=value)`, `site_cache` args, `!= None`, time-field default, `get_valid_columns`, System Console, Country code, `bench version`, removal of translation helpers (only the country_info deprecation), Print Formats / Email Templates / expression fields in its site-code scan.
-- PF scans JS/SCSS line by line (stated in its Limits).
-- PF reads some site records (workspaces, Repost Allowed Types) and customisations.
+| Source | Used for |
+|---|---|
+| Frappe wiki "Migrating to version 16" and "query-builder-migration" | the list of breaking changes |
+| BWH *ERPNext Upgrade Playbook* (PDF) | failure classes, real failure cases, process |
+| Preflight (`kaulith/preflight`) rules page | cross-check of coverage |
+| `frappe`, `erpnext`, `hrms` source, branches `version-15` and `version-16` (frappe 16.54.0) | verification of every rule |
+| `bench` source | how `frappe-dependencies` is enforced |
 
-## Disagreement (open)
-- **Data of extracted-app doctypes.** Playbook: migrate deletes orphan doctypes under "Removing orphan doctypes..." and the data goes with them. Preflight: tables survive the upgrade, ORM reads raise. T-MINUS must test this per site (table list before/after migrate) instead of assuming either.
+## Verified per rule group
 
-## Corrections made to earlier drafts
-- Octicons: PF only, not in wiki.
-- "Preflight does no data checks" was too strong: it reads some site records.
-- Catalog was missing ~40 items present in PF's rule list; added under "Additional items".
-- Wiki heading names the hook `override_doctype`; PF and code use `override_doctype_class`.
+| Rules | Evidence |
+|---|---|
+| Removed/renamed fields, removed DocTypes | JSON diff of every DocType between version-15 and version-16, replacements checked against the v16 migration patches (fields without patch evidence say "removed") |
+| Removed/changed functions | function located in v15 and absent or changed in v16 source; v16 own code gives no findings |
+| `get_all` SQL strings | frappe 16.54.0 `database/query.py` (`_validate_select_field`, filter field validation); the allowed patterns are copied from it |
+| `doc_events` commit | v16 `model/document.py` disables transaction control around hooks; `Database.commit()` then warns and returns; v15 has no such flag |
+| `get_doc` extra keywords | v16 `get_doc` signature accepts only `for_update` and `check_permission` after `(doctype, name)` |
+| Removed hooks | v15 code calls `get_hooks(...)` for them, v16 code does not; replacements are read in v16 |
+| Packaging | frappe 16.54.0 `pyproject.toml` and `package.json`; CI uses Python 3.14, Node 24, MariaDB 11.8; `bench` source for the bound check |
+| `has_permission`, `override_doctype_class` | Frappe wiki and playbook |
 
-## Still to verify
-- Every catalog row against framework source or merged PR before it becomes a rule.
-- Exact "removed fields" list on Company, Customer, Item, Payment Entry, Job Card, Journal Entry (needs PF rule data or ERPNext diff).
-- HRMS v16 changes (only playbook evidence so far).
+## Checked on real code
+
+Rules were run on ERPNext, HRMS and Frappe v15 (they find real uses) and v16 (they do not
+fire on application code that already works on v16; remaining v16 hits are stale test or leftover code).
+
+## Dropped or open
+
+- Translation helper functions (`get_lang_dict`, `get_dict`, ...): not found as plain functions in the v15 source, so no rule.
+- `frappe.sendmail(now=True)`, single-value typed `== "1"`, `!= None` filters, POST-only methods, JS IIFE loading: not verified, not implemented.
+- Whether data of removed DocTypes survives migrate: the playbook and Preflight disagree; to be settled by a table comparison in T-7.
+- `first-row-without-order-by` is a heuristic review prompt (severity `info`).
