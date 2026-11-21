@@ -21,7 +21,6 @@ Python 3.12 or newer is needed to run the tool (it analyses code, it does not ru
 
 ```bash
 tminus scan path/to/your_app --target v16       # scan an app (or a whole bench apps/ folder)
-tminus scan path/to/your_app --target v16 --format html
 tminus scan path/to/your_app --target v16 --format pdf
 tminus scan path/to/your_app --target v16 --format sarif
 tminus env path/to/bench --target v16           # compare Python, Node, MariaDB, Redis with v16's needs
