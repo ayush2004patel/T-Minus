@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 def default_report_path(app_path: Path, target: str, fmt: str) -> Path:
-    """Return the Downloads-folder filename for an HTML or PDF report."""
+    """Return the Downloads-folder filename for a saved report."""
     app_name = app_path.name if app_path.is_dir() else app_path.stem
     safe_name = "".join(char if char.isalnum() or char in "-_." else "-" for char in app_name)
     return Path.home() / "Downloads" / f"{safe_name}-tminus-{target}-report.{fmt}"
@@ -27,9 +27,10 @@ def write_report(path: Path, content: str | bytes) -> Path:
 
 def open_report(path: Path) -> None:
     """Open a saved HTML or PDF report using the operating system default."""
+    target = path.as_uri() if path.suffix.lower() == ".html" else str(path)
     if sys.platform == "darwin":
-        subprocess.Popen(["open", str(path)])  # noqa: S603, S607
+        subprocess.Popen(["open", target])  # noqa: S603, S607
     elif os.name == "nt":
-        os.startfile(path)  # type: ignore[attr-defined]  # noqa: S606
+        os.startfile(target)  # type: ignore[attr-defined]  # noqa: S606
     else:
-        subprocess.Popen(["xdg-open", str(path)])  # noqa: S603, S607
+        subprocess.Popen(["xdg-open", target])  # noqa: S603, S607
