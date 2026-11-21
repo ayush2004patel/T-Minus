@@ -8,6 +8,13 @@ import sys
 from pathlib import Path
 
 
+def default_report_path(app_path: Path, target: str, fmt: str) -> Path:
+    """Return the Downloads-folder filename for an HTML or PDF report."""
+    app_name = app_path.name if app_path.is_dir() else app_path.stem
+    safe_name = "".join(char if char.isalnum() or char in "-_." else "-" for char in app_name)
+    return Path.home() / "Downloads" / f"{safe_name}-tminus-{target}-report.{fmt}"
+
+
 def write_report(path: Path, content: str | bytes) -> Path:
     """Write one report and return its absolute path."""
     resolved = path.resolve()

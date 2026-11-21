@@ -14,7 +14,7 @@ from tminus.engine.env_check import check_environment, format_rows, run_command
 from tminus.engine.loader import RuleLoadError, UnknownTargetError, load_rules, load_target
 from tminus.engine.models import SEVERITY_ORDER
 from tminus.engine.runner import scan_path
-from tminus.report.files import open_report, write_report
+from tminus.report.files import default_report_path, open_report, write_report
 from tminus.report.pdf import render_pdf
 from tminus.report.render import render_html, render_json, render_text
 
@@ -82,18 +82,14 @@ def scan(
     color: ColorMode = typer.Option(
         ColorMode.auto, "--color", help="Color text output: auto, always or never."
     ),
-    output: Path | None = typer.Option(None, "--output", help="Write the report to this file."),
+    output: Path | None = typer.Option(
+        None, "--output", help="Write the report to this file instead of the default location."
+    ),
     open_saved: bool = typer.Option(False, "--open", help="Open a saved HTML or PDF report."),
 ) -> None:
     """T-30: static scan of code for breaking changes (read-only)."""
     if baseline is not None and save_baseline is not None:
         typer.echo("use either --baseline or --write-baseline, not both", err=True)
-        raise typer.Exit(EXIT_USAGE)
-    if fmt == OutputFormat.pdf and output is None:
-        typer.echo("--format pdf needs --output FILE", err=True)
-        raise typer.Exit(EXIT_USAGE)
-    if open_saved and output is None:
-        typer.echo("--open needs --output FILE", err=True)
         raise typer.Exit(EXIT_USAGE)
     if open_saved and fmt not in (OutputFormat.html, OutputFormat.pdf):
         typer.echo("--open is available for HTML and PDF reports", err=True)
@@ -134,11 +130,15 @@ def scan(
         report = render_pdf(result, target, rules, app_name=path.name)
     else:
         report = render_text(result, target, rules, app_name=path.name, color=use_color)
-    if output is None:
+    saved_format = fmt in (OutputFormat.html, OutputFormat.pdf)
+    destination = output or (default_report_path(path, target, fmt.value) if saved_format else None)
+    if destination is None:
         typer.echo(report, color=use_color)
     else:
         try:
-            saved = write_report(output, report)
+            if output is None:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+            saved = write_report(destination, report)
         except OSError as exc:
             typer.echo(f"cannot write report: {exc}", err=True)
             raise typer.Exit(EXIT_FAILED) from exc

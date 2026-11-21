@@ -15,7 +15,7 @@ Newest first. One entry per working session or logical change. Records what chan
 ## 2026-11-21 — Saved HTML and PDF reports
 - Commit: uncommitted
 - Changed: pyproject.toml, cli/main.py, report/{files,pdf,render}.py, tests/test_cli.py, README.md
-- Why: write and optionally open self-contained HTML or PDF reports without shell redirection.
+- Why: write and optionally open self-contained HTML or PDF reports without shell redirection; use app-named Downloads-folder files by default.
 - Tests: 306 passed; ruff, ruff format --check and mypy --strict clean. PDF rendered to five A4 pages and visually inspected.
 - Open: SARIF remains the machine-readable integration report format to add next.
 

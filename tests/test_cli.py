@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner
 
 from tminus.cli.main import app
@@ -74,13 +75,20 @@ def test_json_format(tmp_path: Path) -> None:
     assert data["result"]["findings"][0]["rule_id"] == "v16-removed-python-stdlib"
 
 
-def test_html_format(tmp_path: Path) -> None:
-    """--format html produces a standalone browser report."""
-    args = ["scan", str(_project(tmp_path, "import imp\n")), "--target", "v16", "--format", "html"]
+def test_html_format_uses_the_default_report_location(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """HTML reports save to a named default location when --output is absent."""
+    output = tmp_path / "my_app-tminus-v16-report.html"
+    monkeypatch.setattr("tminus.cli.main.default_report_path", lambda *_: output)
+    app_path = tmp_path / "my_app"
+    app_path.mkdir()
+    (app_path / "mod.py").write_text("import imp\n")
+    args = ["scan", str(app_path), "--target", "v16", "--format", "html"]
     result = runner.invoke(app, args)
     assert result.exit_code == 1
-    assert result.output.startswith("<!doctype html>")
-    assert "v16-removed-python-stdlib" in result.output
+    assert f"Report written to: {output}" in result.output
+    assert "v16-removed-python-stdlib" in output.read_text()
 
 
 def test_output_writes_html_instead_of_printing_it(tmp_path: Path) -> None:
@@ -102,11 +110,19 @@ def test_output_writes_html_instead_of_printing_it(tmp_path: Path) -> None:
     assert output.read_text().startswith("<!doctype html>")
 
 
-def test_pdf_needs_an_output_path(tmp_path: Path) -> None:
-    """PDF is binary, so it must be written to a file rather than the terminal."""
-    result = runner.invoke(app, ["scan", str(tmp_path), "--target", "v16", "--format", "pdf"])
-    assert result.exit_code == 2
-    assert "--format pdf needs --output FILE" in result.output
+def test_pdf_uses_the_default_report_location(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """PDF reports save to a named default location when --output is absent."""
+    output = tmp_path / "my_app-tminus-v16-report.pdf"
+    monkeypatch.setattr("tminus.cli.main.default_report_path", lambda *_: output)
+    app_path = tmp_path / "my_app"
+    app_path.mkdir()
+    (app_path / "mod.py").write_text("import imp\n")
+    result = runner.invoke(app, ["scan", str(app_path), "--target", "v16", "--format", "pdf"])
+    assert result.exit_code == 1
+    assert f"Report written to: {output}" in result.output
+    assert output.read_bytes().startswith(b"%PDF")
 
 
 def test_pdf_output_writes_a_pdf_file(tmp_path: Path) -> None:

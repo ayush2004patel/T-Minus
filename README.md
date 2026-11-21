@@ -21,8 +21,8 @@ Python 3.12 or newer is needed to run the tool (it analyses code, it does not ru
 
 ```bash
 tminus scan path/to/your_app --target v16       # scan an app (or a whole bench apps/ folder)
-tminus scan path/to/your_app --target v16 --format html --output report.html --open
-tminus scan path/to/your_app --target v16 --format pdf --output report.pdf --open
+tminus scan path/to/your_app --target v16 --format html --open
+tminus scan path/to/your_app --target v16 --format pdf --open
 tminus env path/to/bench --target v16           # compare Python, Node, MariaDB, Redis with v16's needs
 ```
 
@@ -31,7 +31,7 @@ Options of `scan`:
 | Option | Meaning |
 |---|---|
 | `--format text` / `html` / `pdf` / `json` | Terminal, browser, PDF, or machine-readable report |
-| `--output FILE` | Write a report to a file and print its location instead of its contents |
+| `--output FILE` | Choose where to save a report instead of its default Downloads-folder location |
 | `--open` | Open a saved HTML or PDF report with the system's default application |
 | `--color auto` / `always` / `never` | Use color in terminal output; `auto` is the default and disables it for saved output |
 | `--fail-on error` / `warning` / `info` / `never` | Lowest severity that gives exit code 1 (default `error`) |
@@ -46,7 +46,9 @@ rule-provided suggested action. Terminal colors make errors, warnings and behavi
 easier to distinguish; saved output stays plain text by default.
 
 The HTML report is self-contained and has collapsible location lists. The PDF report is a
-shareable, paginated version of the same grouped findings. Use `--output FILE --open` to save
+shareable, paginated version of the same grouped findings. HTML and PDF reports save by default in
+your Downloads folder as `<app>-tminus-<target>-report.<format>`; use `--output FILE` to choose
+another location. Add `--open` to save
 and open either report without shell redirection.
 
 Silence one finding with a comment on its line: `# tminus: ignore[rule-id]` (Python, Jinja
