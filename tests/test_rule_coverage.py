@@ -29,3 +29,8 @@ def test_clean_fixtures_have_no_findings() -> None:
     rules = load_rules("v16")
     for fixture in ("clean.py", "app_clean", "overrides_clean", "pkg_clean", "hooks_clean"):
         assert scan_path(FIXTURES / fixture, rules).findings == [], fixture
+
+
+def test_every_rule_has_references() -> None:
+    """Each rule must cite the evidence it was built from (an AGENTS.md rule)."""
+    assert [r.id for r in load_rules("v16") if not r.references] == []
