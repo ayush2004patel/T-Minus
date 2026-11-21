@@ -15,6 +15,13 @@ _SET = re.compile(r"^set\s+(\w+)\s*=\s*(.+)$", re.DOTALL)
 _TILDE = re.compile(r"\s~\s")  # Jinja string concatenation
 
 
+def _inline_if(statement: str) -> str:
+    """Give Jinja's optional-else conditional Python's explicit None fallback."""
+    if " if " in statement and " else " not in statement and statement.endswith(")"):
+        return statement[:-1] + " else None)"
+    return statement
+
+
 def _statement(body: str, is_block: bool) -> str | None:
     """Turn the inside of one Jinja tag into a Python statement, or None if it has no expression."""
     text = body.strip()
@@ -43,6 +50,7 @@ def _statements(text: str) -> tuple[list[tuple[int, str]], int]:
         statement = _statement(_TILDE.sub(" + ", body), is_block)
         if statement is None:
             continue
+        statement = _inline_if(statement)
         start = m.start(group) + len(body) - len(body.lstrip())
         try:
             ast.parse(statement)

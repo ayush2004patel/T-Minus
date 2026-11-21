@@ -195,6 +195,7 @@ def _first_row_hits(ctx: FileContext) -> list[Hit]:
         return []
     existence = _existence_checks(ctx.tree)
     hits: dict[int, Hit] = {}
+    limited: set[int] = set()
 
     def add(line: int, call: ast.Call, how: str) -> None:
         """Record one hit per line."""
@@ -207,6 +208,7 @@ def _first_row_hits(ctx: FileContext) -> list[Hit]:
             is_one = isinstance(kw.value, ast.Constant) and kw.value.value == 1
             if kw.arg in LIMIT_KEYWORDS and is_one:
                 add(call.lineno, call, "only one row is requested (limit 1)")
+                limited.add(id(call))
     scopes: list[ast.AST] = [ctx.tree]
     scopes += [
         n for n in ast.walk(ctx.tree) if isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef)
@@ -226,10 +228,16 @@ def _first_row_hits(ctx: FileContext) -> list[Hit]:
         for node in nodes:
             if not isinstance(node, ast.Subscript) or not _is_first_or_last(node.slice):
                 continue
-            if isinstance(node.value, ast.Call) and id(node.value) in unordered:
+            if (
+                isinstance(node.value, ast.Call)
+                and id(node.value) in unordered
+                and id(node.value) not in limited
+            ):
                 add(node.lineno, node.value, "the first/last row is used")
             elif isinstance(node.value, ast.Name) and node.value.id in typed:
-                add(node.lineno, typed[node.value.id], "the first/last row is used")
+                call = typed[node.value.id]
+                if id(call) not in limited:
+                    add(node.lineno, call, "the first/last row is used")
     return sorted(hits.values(), key=lambda h: h.line)
 
 

@@ -12,6 +12,13 @@ Newest first. One entry per working session or logical change. Records what chan
 - Open: <anything unfinished or risky>
 ```
 
+## 2026-11-21 — Real-app scan noise fixes
+- Commit: uncommitted
+- Changed: engine/{pyparse,jinja_refs}.py, engine/{scanners/python_ast,matchers/query_syntax}.py, tests/test_real_app_fixes.py
+- Why: precision_mass exposed a parser warning, duplicate unordered-query findings, and valid Jinja inline conditionals reported as unchecked.
+- Tests: 298 passed; ruff, ruff format --check and mypy --strict clean. precision_mass: no SyntaxWarning or unparsable-Jinja note; first-row findings reduced 19 -> 16.
+- Open: review the remaining real-app upgrade findings separately.
+
 ## 2026-11-04 — M1.7 bench and app compatibility
 - New: engine/{versions,app_packaging,env_check}.py, scanners/packaging.py, 5 rules v16-app-*, fixtures pkg_*, tests/{test_versions,test_packaging,test_env_check}.py
 - Edited: models.py (PackageMatch, TargetInfo), loader.py (load_target), runner.py (pass 5), cli/main.py (env), target.yaml (requirements), render.py
