@@ -14,7 +14,7 @@ from tminus.engine.env_check import check_environment, format_rows, run_command
 from tminus.engine.loader import RuleLoadError, UnknownTargetError, load_rules, load_target
 from tminus.engine.models import SEVERITY_ORDER
 from tminus.engine.runner import scan_path
-from tminus.report.render import render_json, render_text
+from tminus.report.render import render_html, render_json, render_text
 
 app = typer.Typer(help="Count down to a clean Frappe/ERPNext upgrade.", no_args_is_help=True)
 
@@ -28,6 +28,7 @@ class OutputFormat(StrEnum):
 
     text = "text"
     json = "json"
+    html = "html"
 
 
 class FailOn(StrEnum):
@@ -107,12 +108,15 @@ def scan(
             typer.echo(str(exc), err=True)
             raise typer.Exit(EXIT_USAGE) from exc
 
-    use_color = color == ColorMode.always or (color == ColorMode.auto and sys.stdout.isatty())
-    report = (
-        render_json(result, target)
-        if fmt == OutputFormat.json
-        else render_text(result, target, rules, app_name=path.name, color=use_color)
+    use_color = fmt == OutputFormat.text and (
+        color == ColorMode.always or (color == ColorMode.auto and sys.stdout.isatty())
     )
+    if fmt == OutputFormat.json:
+        report = render_json(result, target)
+    elif fmt == OutputFormat.html:
+        report = render_html(result, target, rules, app_name=path.name)
+    else:
+        report = render_text(result, target, rules, app_name=path.name, color=use_color)
     typer.echo(report, color=use_color)
 
     if fail_on is not FailOn.never:

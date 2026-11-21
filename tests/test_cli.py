@@ -74,6 +74,15 @@ def test_json_format(tmp_path: Path) -> None:
     assert data["result"]["findings"][0]["rule_id"] == "v16-removed-python-stdlib"
 
 
+def test_html_format(tmp_path: Path) -> None:
+    """--format html produces a standalone browser report."""
+    args = ["scan", str(_project(tmp_path, "import imp\n")), "--target", "v16", "--format", "html"]
+    result = runner.invoke(app, args)
+    assert result.exit_code == 1
+    assert result.output.startswith("<!doctype html>")
+    assert "v16-removed-python-stdlib" in result.output
+
+
 def test_color_always_adds_ansi_codes(tmp_path: Path) -> None:
     """--color always emits terminal colors even when the output is captured."""
     args = [

@@ -21,7 +21,7 @@ from tminus.engine.baseline import (
 from tminus.engine.loader import load_rules
 from tminus.engine.models import Finding, ScanResult
 from tminus.engine.runner import scan_path
-from tminus.report.render import render_json, render_text, summarize
+from tminus.report.render import render_html, render_json, render_text, summarize
 
 RULES = load_rules("v16")
 runner = CliRunner()
@@ -246,6 +246,18 @@ def test_text_report_coloring_is_opt_in() -> None:
     result = ScanResult(findings=[_finding()])
     assert "\033[" not in render_text(result, "v16")
     assert "\033[" in render_text(result, "v16", color=True)
+
+
+def test_html_report_is_self_contained_and_escapes_finding_text() -> None:
+    """The HTML report groups a rule and escapes source code safely."""
+    result = ScanResult(findings=[_finding(snippet="value < other", detail="a & b")])
+    report = render_html(result, "v16", app_name="my_app")
+    assert report.startswith("<!doctype html>")
+    assert "<style>" in report
+    assert "Application:</strong> my_app" in report
+    assert "Rule: <code>r1</code>" in report
+    assert "value &lt; other" in report
+    assert "a &amp; b" in report
 
 
 def test_json_report_has_summary_and_baselined_count(tmp_path: Path) -> None:

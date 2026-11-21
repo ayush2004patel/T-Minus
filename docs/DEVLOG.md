@@ -12,12 +12,12 @@ Newest first. One entry per working session or logical change. Records what chan
 - Open: <anything unfinished or risky>
 ```
 
-## 2026-11-21 — Rule-grouped, colorized text report
+## 2026-11-21 — Rule-grouped reports for terminal and browser
 - Commit: uncommitted
-- Changed: cli/main.py, report/render.py, tests/test_baseline.py, README.md
-- Why: make real-app findings a checklist by upgrade problem, with terminal colors and every technical location retained.
-- Tests: 301 passed; ruff, ruff format --check and mypy --strict clean. precision_mass output reviewed; --color always verified.
-- Open: text output only; JSON remains the machine-readable report format.
+- Changed: cli/main.py, report/render.py, tests/{test_baseline,test_cli}.py, README.md
+- Why: make real-app findings a checklist by upgrade problem in terminal and self-contained HTML, with every technical location retained.
+- Tests: 303 passed; ruff, ruff format --check and mypy --strict clean. precision_mass HTML report generated and inspected.
+- Open: SARIF remains the machine-readable integration report format to add next.
 
 ## 2026-11-21 — Real-app scan noise fixes
 - Commit: uncommitted

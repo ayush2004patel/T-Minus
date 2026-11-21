@@ -21,6 +21,7 @@ Python 3.12 or newer is needed to run the tool (it analyses code, it does not ru
 
 ```bash
 tminus scan path/to/your_app --target v16       # scan an app (or a whole bench apps/ folder)
+tminus scan path/to/your_app --target v16 --format html > report.html
 tminus env path/to/bench --target v16           # compare Python, Node, MariaDB, Redis with v16's needs
 ```
 
@@ -28,7 +29,7 @@ Options of `scan`:
 
 | Option | Meaning |
 |---|---|
-| `--format text` / `json` | Human report (default) or machine-readable JSON |
+| `--format text` / `html` / `json` | Terminal report (default), browser report, or machine-readable JSON |
 | `--color auto` / `always` / `never` | Use color in terminal output; `auto` is the default and disables it for saved output |
 | `--fail-on error` / `warning` / `info` / `never` | Lowest severity that gives exit code 1 (default `error`) |
 | `--write-baseline FILE` | Save today's findings and exit 0 |
@@ -40,6 +41,9 @@ The text report starts with a plain-language checklist, then groups complete evi
 upgrade rule that found it. It retains the rule ID, every file/line, source snippet and
 rule-provided suggested action. Terminal colors make errors, warnings and behavior reviews
 easier to distinguish; saved output stays plain text by default.
+
+The HTML report is self-contained: save it with `> report.html` and open it in a browser to
+review the same grouped findings with collapsible location lists.
 
 Silence one finding with a comment on its line: `# tminus: ignore[rule-id]` (Python, Jinja
 `{# ... #}`, `pyproject.toml`) or `// tminus: ignore[rule-id]` (JavaScript).

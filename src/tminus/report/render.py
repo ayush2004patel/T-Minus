@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 from collections.abc import Mapping, Sequence
+from html import escape
 from typing import Any
 
 from tminus.engine.models import Finding, Rule, ScanResult
@@ -26,6 +27,40 @@ _SEVERITY_HEADINGS = {
     ),
 }
 _COLORS = {"error": "31;1", "warning": "33;1", "info": "36;1"}
+_HTML_CSS = """
+body { background: #f6f8fa; color: #1f2328; font: 16px/1.5 system-ui, sans-serif; margin: 0; }
+main { max-width: 1000px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+header, section, footer {
+  background: #fff; border: 1px solid #d0d7de; border-radius: 8px; padding: 1.25rem;
+  margin-top: 1rem;
+}
+h1, h2, h3 { line-height: 1.25; }
+h1 { margin-top: 0; }
+h2 { border-bottom: 1px solid #d0d7de; padding-bottom: .5rem; }
+.result { border-left: 6px solid #0969da; }
+.error { border-left-color: #cf222e; }
+.warning { border-left-color: #9a6700; }
+.info { border-left-color: #0969da; }
+.status { font-weight: 700; }
+.status.error { color: #cf222e; }
+.status.warning { color: #9a6700; }
+.status.info { color: #0969da; }
+.rule {
+  border: 1px solid #d0d7de; border-left: 5px solid #0969da; border-radius: 6px;
+  margin: 1rem 0; padding: 1rem;
+}
+.rule.error { border-left-color: #cf222e; }
+.rule.warning { border-left-color: #9a6700; }
+.meta { color: #57606a; }
+code { background: #f6f8fa; border-radius: 4px; padding: .1rem .3rem; }
+pre {
+  background: #f6f8fa; border-radius: 4px; margin: .4rem 0; overflow-x: auto;
+  padding: .75rem; white-space: pre-wrap;
+}
+details { margin-top: .75rem; }
+li { margin: .75rem 0; }
+.note { color: #57606a; }
+"""
 
 
 def _counts_text(counts: Mapping[str, int], keys: tuple[str, ...]) -> str:
@@ -170,3 +205,107 @@ def render_json(result: ScanResult, target: str) -> str:
         "result": result.model_dump(mode="json"),
     }
     return json.dumps(payload, indent=2)
+
+
+def render_html(
+    result: ScanResult,
+    target: str,
+    rules: Sequence[Rule] = (),
+    app_name: str | None = None,
+) -> str:
+    """Render a self-contained, browser-friendly version of the text report."""
+    titles = {rule.id: rule.title for rule in rules}
+    counts: Counter[str] = Counter(str(f.severity) for f in result.findings)
+    overall = "error" if counts["error"] else "warning" if counts["warning"] else "info"
+    name = app_name or "application"
+    out = [
+        "<!doctype html>",
+        '<html lang="en"><head><meta charset="utf-8">',
+        '<meta name="viewport" content="width=device-width, initial-scale=1">',
+        f"<title>{escape(name)} — T-MINUS scan report</title>",
+        f"<style>{_HTML_CSS}</style></head><body><main>",
+        "<header>",
+        "<h1>T-MINUS scan report</h1>",
+        f"<p><strong>Target upgrade:</strong> v15 → {escape(target)}<br>",
+        f"<strong>Application:</strong> {escape(name)}<br>",
+        f"<strong>Files scanned:</strong> {result.files_scanned}</p>",
+        "</header>",
+    ]
+    out.extend(_html_overview(result, counts, overall))
+    for severity in SEVERITIES:
+        findings = [finding for finding in result.findings if finding.severity == severity]
+        if findings:
+            out.extend(_html_rule_groups(severity, findings, titles))
+    out.append("<footer><h2>Not checked</h2><ul>")
+    out.extend(f"<li>{escape(note)}</li>" for note in NOT_CHECKED)
+    out.extend(f"<li>{escape('Skipped: ' + note)}</li>" for note in result.skipped)
+    out.append("</ul></footer></main></body></html>")
+    return "\n".join(out)
+
+
+def _html_overview(result: ScanResult, counts: Counter[str], overall: str) -> list[str]:
+    """Render the HTML report's plain-language result and next steps."""
+    if not result.findings:
+        message = "No new known issues." if result.baselined else "No known issues."
+        return [f'<section class="result info"><h2>Result: {message}</h2></section>']
+    _, status, _ = _SEVERITY_HEADINGS[overall]
+    out = [
+        f'<section class="result {overall}">',
+        f'<h2>Result: <span class="status {overall}">{status}</span></h2>',
+        f"<p><strong>Findings:</strong> {escape(_counts_text(counts, SEVERITIES))}</p>",
+        "<h3>What to do next</h3><ol>",
+    ]
+    if counts["error"]:
+        out.append("<li>Resolve Errors before an upgrade rehearsal.</li>")
+    if counts["warning"]:
+        out.append("<li>Review Warnings before migrating.</li>")
+    if counts["info"]:
+        out.append("<li>Review Information findings for behavior changes.</li>")
+    out.extend(
+        [
+            "</ol>",
+            '<p class="note">This is a static scan. Confirm changes on a restored copy '
+            "before upgrading production.</p>",
+            "</section>",
+        ]
+    )
+    return out
+
+
+def _html_rule_groups(severity: str, findings: list[Finding], titles: dict[str, str]) -> list[str]:
+    """Render all locations for each rule as accessible HTML cards."""
+    heading, status, guidance = _SEVERITY_HEADINGS[severity]
+    out = [f'<section class="{severity}">', f"<h2>{escape(heading)} ({len(findings)})</h2>"]
+    out.append(f"<p>{escape(guidance)}</p>")
+    by_rule: dict[str, list[Finding]] = {}
+    for finding in findings:
+        by_rule.setdefault(finding.rule_id, []).append(finding)
+    for number, rule_id in enumerate(sorted(by_rule), start=1):
+        rule_findings = sorted(by_rule[rule_id], key=lambda f: (f.file, f.line))
+        first = rule_findings[0]
+        title = titles.get(rule_id, rule_id)
+        out.extend(
+            [
+                f'<article class="rule {severity}">',
+                f"<h3>{number}. {escape(title)} ({len(rule_findings)} location(s))</h3>",
+                f'<p class="meta"><span class="status {severity}">{status}</span> · '
+                f"Rule: <code>{escape(rule_id)}</code> · [{escape(first.category)}, "
+                f"{escape(first.stage)}]</p>",
+                f"<p><strong>Why it matters:</strong> {escape(first.message)}</p>",
+                f"<p><strong>Suggested action:</strong> {escape(first.replacement)}</p>",
+                "<details open><summary>Affected locations</summary><ul>",
+            ]
+        )
+        for finding in rule_findings:
+            out.extend(
+                [
+                    f"<li><code>{escape(f'{finding.file}:{finding.line}')}</code>",
+                    f"<pre>{escape(finding.snippet)}</pre>",
+                ]
+            )
+            if finding.detail:
+                out.append(f"<strong>Technical context:</strong> {escape(finding.detail)}")
+            out.append("</li>")
+        out.extend(["</ul></details>", "</article>"])
+    out.append("</section>")
+    return out
