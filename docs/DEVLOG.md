@@ -12,6 +12,13 @@ Newest first. One entry per working session or logical change. Records what chan
 - Open: <anything unfinished or risky>
 ```
 
+## 2026-11-21 — Release workflow and wheel smoke test
+- Commit: uncommitted
+- Changed: .github/workflows/release.yml, pyproject.toml, README.md, docs/releasing.md
+- Why: build a wheel and source distribution, install the wheel in a clean environment, then create a GitHub Release and publish through PyPI Trusted Publishing only for an intentional version tag.
+- Tests: 310 passed; ruff, ruff format --check and mypy --strict clean. Built the wheel and source archive; installed the wheel into a fresh environment and ran `tminus --version` plus a clean scan.
+- Open: configure PyPI Trusted Publishing before the first tagged release.
+
 ## 2026-11-21 — Saved HTML, PDF and SARIF reports
 - Commit: uncommitted
 - Changed: pyproject.toml, cli/main.py, report/{files,pdf,render}.py, tests/{test_cli,test_baseline,test_report_files}.py, README.md, CHANGELOG.md, docs/{roadmap,tech-stack}.md

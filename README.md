@@ -97,6 +97,8 @@ ruff check . && ruff format --check . && mypy && pytest
 To add a rule, see [docs/rule-schema.md](docs/rule-schema.md): a rule is one YAML file, and
 `tests/test_rule_coverage.py` fails until it has a violating and a clean example.
 
+See [docs/releasing.md](docs/releasing.md) for the wheel, GitHub Release and PyPI release process.
+
 ## License
 
 MIT
