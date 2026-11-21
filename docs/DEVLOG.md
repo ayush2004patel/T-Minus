@@ -12,12 +12,12 @@ Newest first. One entry per working session or logical change. Records what chan
 - Open: <anything unfinished or risky>
 ```
 
-## 2026-11-21 — Saved HTML and PDF reports
+## 2026-11-21 — Saved HTML, PDF and SARIF reports
 - Commit: uncommitted
-- Changed: pyproject.toml, cli/main.py, report/{files,pdf,render}.py, tests/test_cli.py, README.md
-- Why: write and optionally open self-contained HTML or PDF reports without shell redirection; use app-named Downloads-folder files by default.
-- Tests: 306 passed; ruff, ruff format --check and mypy --strict clean. PDF rendered to five A4 pages and visually inspected.
-- Open: SARIF remains the machine-readable integration report format to add next.
+- Changed: pyproject.toml, cli/main.py, report/{files,pdf,render}.py, tests/{test_cli,test_baseline}.py, README.md, CHANGELOG.md, docs/{roadmap,tech-stack}.md
+- Why: write and automatically open self-contained HTML or PDF reports without shell redirection; use app-named Downloads-folder files by default; export SARIF 2.1.0 for code-scanning tools.
+- Tests: 309 passed; ruff, ruff format --check and mypy --strict clean. A real CLI export produced SARIF 2.1.0 with 25 rule definitions and 22 findings; PDF rendered to five A4 pages and visually inspected.
+- Open: upload integration for a specific CI provider is deliberately left to that provider's workflow.
 
 ## 2026-11-21 — Real-app scan noise fixes
 - Commit: uncommitted

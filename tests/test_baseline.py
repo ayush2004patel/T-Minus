@@ -21,7 +21,7 @@ from tminus.engine.baseline import (
 from tminus.engine.loader import load_rules
 from tminus.engine.models import Finding, ScanResult
 from tminus.engine.runner import scan_path
-from tminus.report.render import render_html, render_json, render_text, summarize
+from tminus.report.render import render_html, render_json, render_sarif, render_text, summarize
 
 RULES = load_rules("v16")
 runner = CliRunner()
@@ -266,3 +266,23 @@ def test_json_report_has_summary_and_baselined_count(tmp_path: Path) -> None:
     data = json.loads(render_json(scan_path(project, RULES), "v16"))
     assert data["summary"]["total"] == 1
     assert data["result"]["baselined"] == 0
+
+
+def test_sarif_report_keeps_rule_location_and_technical_details(tmp_path: Path) -> None:
+    """SARIF output has standard rule metadata and a clickable source location."""
+    project = _project(tmp_path, "import imp\n")
+    data = json.loads(render_sarif(scan_path(project, RULES), "v16", RULES, project))
+    run = data["runs"][0]
+    result = run["results"][0]
+    rule = next(item for item in run["tool"]["driver"]["rules"] if item["id"] == result["ruleId"])
+    assert data["version"] == "2.1.0"
+    assert result["ruleId"] == "v16-removed-python-stdlib"
+    assert result["level"] == "error"
+    assert result["locations"][0]["physicalLocation"]["artifactLocation"] == {
+        "uri": "mod.py",
+        "uriBaseId": "SRCROOT",
+    }
+    assert result["locations"][0]["physicalLocation"]["region"]["startLine"] == 1
+    assert result["properties"]["suggestedAction"]
+    assert rule["shortDescription"]["text"]
+    assert rule["properties"]["references"]

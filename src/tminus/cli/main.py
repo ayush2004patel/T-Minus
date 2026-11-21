@@ -16,7 +16,7 @@ from tminus.engine.models import SEVERITY_ORDER
 from tminus.engine.runner import scan_path
 from tminus.report.files import default_report_path, open_report, write_report
 from tminus.report.pdf import render_pdf
-from tminus.report.render import render_html, render_json, render_text
+from tminus.report.render import render_html, render_json, render_sarif, render_text
 
 app = typer.Typer(help="Count down to a clean Frappe/ERPNext upgrade.", no_args_is_help=True)
 
@@ -32,6 +32,7 @@ class OutputFormat(StrEnum):
     json = "json"
     html = "html"
     pdf = "pdf"
+    sarif = "sarif"
 
 
 class FailOn(StrEnum):
@@ -85,14 +86,15 @@ def scan(
     output: Path | None = typer.Option(
         None, "--output", help="Write the report to this file instead of the default location."
     ),
-    open_saved: bool = typer.Option(False, "--open", help="Open a saved HTML or PDF report."),
+    open_saved: bool = typer.Option(
+        True,
+        "--open/--no-open",
+        help="Open saved HTML and PDF reports (default: open).",
+    ),
 ) -> None:
     """T-30: static scan of code for breaking changes (read-only)."""
     if baseline is not None and save_baseline is not None:
         typer.echo("use either --baseline or --write-baseline, not both", err=True)
-        raise typer.Exit(EXIT_USAGE)
-    if open_saved and fmt not in (OutputFormat.html, OutputFormat.pdf):
-        typer.echo("--open is available for HTML and PDF reports", err=True)
         raise typer.Exit(EXIT_USAGE)
     try:
         rules = load_rules(target)
@@ -128,9 +130,11 @@ def scan(
         report = render_html(result, target, rules, app_name=path.name)
     elif fmt == OutputFormat.pdf:
         report = render_pdf(result, target, rules, app_name=path.name)
+    elif fmt == OutputFormat.sarif:
+        report = render_sarif(result, target, rules, path)
     else:
         report = render_text(result, target, rules, app_name=path.name, color=use_color)
-    saved_format = fmt in (OutputFormat.html, OutputFormat.pdf)
+    saved_format = fmt in (OutputFormat.html, OutputFormat.pdf, OutputFormat.sarif)
     destination = output or (default_report_path(path, target, fmt.value) if saved_format else None)
     if destination is None:
         typer.echo(report, color=use_color)
@@ -143,7 +147,7 @@ def scan(
             typer.echo(f"cannot write report: {exc}", err=True)
             raise typer.Exit(EXIT_FAILED) from exc
         typer.echo(f"Report written to: {saved}")
-        if open_saved:
+        if open_saved and fmt in (OutputFormat.html, OutputFormat.pdf):
             try:
                 open_report(saved)
             except OSError as exc:

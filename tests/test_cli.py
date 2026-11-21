@@ -78,9 +78,11 @@ def test_json_format(tmp_path: Path) -> None:
 def test_html_format_uses_the_default_report_location(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """HTML reports save to a named default location when --output is absent."""
+    """HTML reports save and open from a named default location."""
     output = tmp_path / "my_app-tminus-v16-report.html"
+    opened: list[Path] = []
     monkeypatch.setattr("tminus.cli.main.default_report_path", lambda *_: output)
+    monkeypatch.setattr("tminus.cli.main.open_report", opened.append)
     app_path = tmp_path / "my_app"
     app_path.mkdir()
     (app_path / "mod.py").write_text("import imp\n")
@@ -89,6 +91,7 @@ def test_html_format_uses_the_default_report_location(
     assert result.exit_code == 1
     assert f"Report written to: {output}" in result.output
     assert "v16-removed-python-stdlib" in output.read_text()
+    assert opened == [output]
 
 
 def test_output_writes_html_instead_of_printing_it(tmp_path: Path) -> None:
@@ -103,6 +106,7 @@ def test_output_writes_html_instead_of_printing_it(tmp_path: Path) -> None:
         "html",
         "--output",
         str(output),
+        "--no-open",
     ]
     result = runner.invoke(app, args)
     assert result.exit_code == 1
@@ -113,9 +117,11 @@ def test_output_writes_html_instead_of_printing_it(tmp_path: Path) -> None:
 def test_pdf_uses_the_default_report_location(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """PDF reports save to a named default location when --output is absent."""
+    """PDF reports save and open from a named default location."""
     output = tmp_path / "my_app-tminus-v16-report.pdf"
+    opened: list[Path] = []
     monkeypatch.setattr("tminus.cli.main.default_report_path", lambda *_: output)
+    monkeypatch.setattr("tminus.cli.main.open_report", opened.append)
     app_path = tmp_path / "my_app"
     app_path.mkdir()
     (app_path / "mod.py").write_text("import imp\n")
@@ -123,6 +129,7 @@ def test_pdf_uses_the_default_report_location(
     assert result.exit_code == 1
     assert f"Report written to: {output}" in result.output
     assert output.read_bytes().startswith(b"%PDF")
+    assert opened == [output]
 
 
 def test_pdf_output_writes_a_pdf_file(tmp_path: Path) -> None:
@@ -137,10 +144,48 @@ def test_pdf_output_writes_a_pdf_file(tmp_path: Path) -> None:
         "pdf",
         "--output",
         str(output),
+        "--no-open",
     ]
     result = runner.invoke(app, args)
     assert result.exit_code == 1
     assert output.read_bytes().startswith(b"%PDF")
+
+
+def test_no_open_keeps_an_html_report_closed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """--no-open is available for scripts that should only save a report."""
+    output = tmp_path / "report.html"
+    opened: list[Path] = []
+    monkeypatch.setattr("tminus.cli.main.open_report", opened.append)
+    args = [
+        "scan",
+        str(_project(tmp_path, "import imp\n")),
+        "--target",
+        "v16",
+        "--format",
+        "html",
+        "--output",
+        str(output),
+        "--no-open",
+    ]
+    assert runner.invoke(app, args).exit_code == 1
+    assert opened == []
+
+
+def test_sarif_uses_the_default_report_location(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SARIF reports save to a machine-readable default location."""
+    output = tmp_path / "my_app-tminus-v16-report.sarif"
+    monkeypatch.setattr("tminus.cli.main.default_report_path", lambda *_: output)
+    app_path = tmp_path / "my_app"
+    app_path.mkdir()
+    (app_path / "mod.py").write_text("import imp\n")
+    result = runner.invoke(app, ["scan", str(app_path), "--target", "v16", "--format", "sarif"])
+    assert result.exit_code == 1
+    assert f"Report written to: {output}" in result.output
+    assert json.loads(output.read_text())["version"] == "2.1.0"
 
 
 def test_color_always_adds_ansi_codes(tmp_path: Path) -> None:

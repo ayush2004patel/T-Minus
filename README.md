@@ -21,8 +21,9 @@ Python 3.12 or newer is needed to run the tool (it analyses code, it does not ru
 
 ```bash
 tminus scan path/to/your_app --target v16       # scan an app (or a whole bench apps/ folder)
-tminus scan path/to/your_app --target v16 --format html --open
-tminus scan path/to/your_app --target v16 --format pdf --open
+tminus scan path/to/your_app --target v16 --format html
+tminus scan path/to/your_app --target v16 --format pdf
+tminus scan path/to/your_app --target v16 --format sarif
 tminus env path/to/bench --target v16           # compare Python, Node, MariaDB, Redis with v16's needs
 ```
 
@@ -30,9 +31,9 @@ Options of `scan`:
 
 | Option | Meaning |
 |---|---|
-| `--format text` / `html` / `pdf` / `json` | Terminal, browser, PDF, or machine-readable report |
+| `--format text` / `html` / `pdf` / `json` / `sarif` | Terminal, browser, PDF, JSON, or code-scanning report |
 | `--output FILE` | Choose where to save a report instead of its default Downloads-folder location |
-| `--open` | Open a saved HTML or PDF report with the system's default application |
+| `--no-open` | Save an HTML or PDF report without opening it (useful in scripts and CI) |
 | `--color auto` / `always` / `never` | Use color in terminal output; `auto` is the default and disables it for saved output |
 | `--fail-on error` / `warning` / `info` / `never` | Lowest severity that gives exit code 1 (default `error`) |
 | `--write-baseline FILE` | Save today's findings and exit 0 |
@@ -47,9 +48,12 @@ easier to distinguish; saved output stays plain text by default.
 
 The HTML report is self-contained and has collapsible location lists. The PDF report is a
 shareable, paginated version of the same grouped findings. HTML and PDF reports save by default in
-your Downloads folder as `<app>-tminus-<target>-report.<format>`; use `--output FILE` to choose
-another location. Add `--open` to save
-and open either report without shell redirection.
+your Downloads folder as `<app>-tminus-<target>-report.<format>`; the machine-readable SARIF
+report saves there too. HTML and PDF reports open automatically after saving; use `--no-open` in
+scripts or CI. Use `--output FILE` to choose another location.
+
+SARIF (`.sarif`) is for GitHub code scanning, VS Code and CI tools: it preserves each rule ID,
+severity, file/line location, suggested action and technical context as clickable findings.
 
 Silence one finding with a comment on its line: `# tminus: ignore[rule-id]` (Python, Jinja
 `{# ... #}`, `pyproject.toml`) or `// tminus: ignore[rule-id]` (JavaScript).

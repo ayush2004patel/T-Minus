@@ -5,7 +5,7 @@
 First release: the T-30 static scanner for Frappe/ERPNext v15 → v16.
 
 - `tminus scan`: Python, JavaScript, Jinja print formats, `hooks.py`, SQL text and app
-  packaging checks; text and JSON reports; `--fail-on`; `--baseline` / `--write-baseline`;
+  packaging checks; text, JSON, HTML, PDF and SARIF reports; `--fail-on`; `--baseline` / `--write-baseline`;
   `# tminus: ignore[rule-id]` comments.
 - `tminus env`: compare Python, Node, MariaDB and Redis on this machine with what v16 needs.
 - 25 rules, each a YAML file with its evidence, checked against frappe, erpnext and hrms

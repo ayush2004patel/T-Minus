@@ -15,8 +15,9 @@
 | Tests | pytest, fixtures, rule-coverage test |
 | Quality | ruff (lint and format), mypy `--strict` |
 | CI | GitHub Actions |
+| Reports | terminal text, JSON, self-contained HTML, PDF and SARIF 2.1.0 |
 
 ## Planned (not built yet)
 
 libcst codemods, a read-only database connector (T-14), a bench runner for migrate
-(T-7), SARIF and HTML reports, a thin Frappe app with differential tests, an MCP server.
+(T-7), a thin Frappe app with differential tests, an MCP server.

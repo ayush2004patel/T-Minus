@@ -1,4 +1,4 @@
-"""Turn a ScanResult into text or JSON output."""
+"""Turn a ScanResult into terminal, web and machine-readable reports."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import json
 from collections import Counter
 from collections.abc import Mapping, Sequence
 from html import escape
+from pathlib import Path
 from typing import Any
 
 from tminus.engine.models import Finding, Rule, ScanResult
@@ -205,6 +206,101 @@ def render_json(result: ScanResult, target: str) -> str:
         "result": result.model_dump(mode="json"),
     }
     return json.dumps(payload, indent=2)
+
+
+def render_sarif(result: ScanResult, target: str, rules: Sequence[Rule], root: Path) -> str:
+    """Render findings as a SARIF 2.1.0 log for code-scanning tools."""
+    source_root = root.parent if root.is_file() else root
+    rule_map = {rule.id: rule for rule in rules}
+    payload = {
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [
+            {
+                "tool": {
+                    "driver": {
+                        "name": "T-MINUS",
+                        "informationUri": "https://github.com/kaulith/tminus",
+                        "rules": [_sarif_rule(rule) for rule in rules],
+                    }
+                },
+                "originalUriBaseIds": {"SRCROOT": {"uri": _directory_uri(source_root)}},
+                "results": [
+                    _sarif_result(finding, rule_map.get(finding.rule_id), source_root)
+                    for finding in result.findings
+                ],
+            }
+        ],
+    }
+    return json.dumps(payload, indent=2)
+
+
+def _sarif_rule(rule: Rule) -> dict[str, Any]:
+    """Convert a T-MINUS rule into SARIF rule metadata."""
+    descriptor: dict[str, Any] = {
+        "id": rule.id,
+        "name": rule.id,
+        "shortDescription": {"text": rule.title},
+        "fullDescription": {"text": rule.message},
+        "help": {"text": rule.replacement},
+        "defaultConfiguration": {"level": _sarif_level(rule.severity)},
+        "properties": {
+            "category": rule.category,
+            "stage": rule.stage,
+            "fixTiming": rule.fix,
+            "autofix": rule.autofix,
+            "confidence": rule.confidence,
+            "references": rule.references,
+        },
+    }
+    reference = next(
+        (ref for ref in rule.references if ref.startswith(("http://", "https://"))), None
+    )
+    if reference:
+        descriptor["helpUri"] = reference
+    return descriptor
+
+
+def _sarif_result(finding: Finding, rule: Rule | None, source_root: Path) -> dict[str, Any]:
+    """Convert one finding into a SARIF result with its source location."""
+    location = Path(finding.file)
+    try:
+        uri = location.resolve().relative_to(source_root.resolve()).as_posix()
+        artifact: dict[str, str] = {"uri": uri, "uriBaseId": "SRCROOT"}
+    except ValueError:
+        artifact = {"uri": location.resolve().as_uri()}
+    properties: dict[str, Any] = {
+        "category": finding.category,
+        "stage": finding.stage,
+        "suggestedAction": finding.replacement,
+        "technicalContext": finding.detail,
+    }
+    if rule is not None:
+        properties["references"] = rule.references
+    return {
+        "ruleId": finding.rule_id,
+        "level": _sarif_level(finding.severity),
+        "message": {"text": finding.message},
+        "locations": [
+            {
+                "physicalLocation": {
+                    "artifactLocation": artifact,
+                    "region": {"startLine": finding.line, "snippet": {"text": finding.snippet}},
+                }
+            }
+        ],
+        "properties": properties,
+    }
+
+
+def _sarif_level(severity: str) -> str:
+    """Map T-MINUS severities to the SARIF severity vocabulary."""
+    return {"error": "error", "warning": "warning", "info": "note"}[severity]
+
+
+def _directory_uri(path: Path) -> str:
+    """Return a file URI that identifies a directory as a SARIF base URI."""
+    return f"{path.resolve().as_uri()}/"
 
 
 def render_html(

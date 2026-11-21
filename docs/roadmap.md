@@ -12,7 +12,7 @@ frappe, erpnext and hrms version-15 vs version-16 source.
 | Day | Work |
 |---|---|
 | 1 | `--baseline` and a summary grouped by stage and severity |
-| 2 | SARIF and HTML report |
+| 2 | SARIF, HTML and PDF reports — complete |
 | 3 | Run on a real app (`precision_mass`); fix false positives, speed, gaps |
 | 4 | Missing wiki rules, each verified against framework source |
 | 5 | README quickstart, docs, CHANGELOG, LICENSE, PyPI name check |
