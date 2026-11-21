@@ -215,6 +215,39 @@ def test_text_report_shows_the_grouped_summary() -> None:
     assert "by category: 1 loud, 1 quiet" in text
 
 
+def test_text_report_groups_by_rule_and_keeps_technical_evidence() -> None:
+    """The text report makes a rule one checklist while preserving every location."""
+    result = ScanResult(
+        findings=[
+            _finding(file="api.py", line=7, detail="called by hooks.py"),
+            _finding(file="web.py", line=12),
+            _finding(file="web.py", line=18, rule_id="r2", severity="warning", category="quiet"),
+        ]
+    )
+    text = render_text(result, "v16", app_name="my_app")
+    assert "T-MINUS scan report" in text
+    assert "Application: my_app" in text
+    assert "Result: ACTION REQUIRED" in text
+    assert "What to do next:" in text
+    assert "Errors (2)" in text
+    assert "r1 (2 location(s))" in text
+    assert "Status: ACTION REQUIRED • Rule: r1 • [loud, T-30]" in text
+    assert "api.py:7" in text
+    assert "web.py:12" in text
+    assert "Code: import imp" in text
+    assert "Why it matters: m" in text
+    assert "Technical context: called by hooks.py" in text
+    assert "Suggested action: r" in text
+    assert "Warnings (1)" in text
+
+
+def test_text_report_coloring_is_opt_in() -> None:
+    """ANSI colors are present only when terminal color is explicitly requested."""
+    result = ScanResult(findings=[_finding()])
+    assert "\033[" not in render_text(result, "v16")
+    assert "\033[" in render_text(result, "v16", color=True)
+
+
 def test_json_report_has_summary_and_baselined_count(tmp_path: Path) -> None:
     """The JSON report carries the summary and how many findings were hidden."""
     project = _project(tmp_path, "import imp\n")

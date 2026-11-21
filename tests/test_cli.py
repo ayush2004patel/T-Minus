@@ -74,6 +74,20 @@ def test_json_format(tmp_path: Path) -> None:
     assert data["result"]["findings"][0]["rule_id"] == "v16-removed-python-stdlib"
 
 
+def test_color_always_adds_ansi_codes(tmp_path: Path) -> None:
+    """--color always emits terminal colors even when the output is captured."""
+    args = [
+        "scan",
+        str(_project(tmp_path, "import imp\n")),
+        "--target",
+        "v16",
+        "--color",
+        "always",
+    ]
+    result = runner.invoke(app, args)
+    assert "\033[" in result.output
+
+
 def test_syntax_error_file_is_listed_not_crashing(tmp_path: Path) -> None:
     """An unparsable file is reported under 'Not checked'."""
     result = runner.invoke(app, ["scan", str(_project(tmp_path, "def (:\n")), "--target", "v16"])

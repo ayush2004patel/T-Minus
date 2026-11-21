@@ -29,11 +29,17 @@ Options of `scan`:
 | Option | Meaning |
 |---|---|
 | `--format text` / `json` | Human report (default) or machine-readable JSON |
+| `--color auto` / `always` / `never` | Use color in terminal output; `auto` is the default and disables it for saved output |
 | `--fail-on error` / `warning` / `info` / `never` | Lowest severity that gives exit code 1 (default `error`) |
 | `--write-baseline FILE` | Save today's findings and exit 0 |
 | `--baseline FILE` | Hide findings already in the baseline; only new ones count |
 
 Exit codes: `0` clean, `1` findings at or above `--fail-on`, `2` usage error, `3` scan could not run.
+
+The text report starts with a plain-language checklist, then groups complete evidence by the
+upgrade rule that found it. It retains the rule ID, every file/line, source snippet and
+rule-provided suggested action. Terminal colors make errors, warnings and behavior reviews
+easier to distinguish; saved output stays plain text by default.
 
 Silence one finding with a comment on its line: `# tminus: ignore[rule-id]` (Python, Jinja
 `{# ... #}`, `pyproject.toml`) or `// tminus: ignore[rule-id]` (JavaScript).

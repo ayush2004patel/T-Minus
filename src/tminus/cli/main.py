@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import sys
 from enum import StrEnum
 from pathlib import Path
 
@@ -38,6 +39,14 @@ class FailOn(StrEnum):
     never = "never"
 
 
+class ColorMode(StrEnum):
+    """When the text report uses ANSI terminal colors."""
+
+    auto = "auto"
+    always = "always"
+    never = "never"
+
+
 def _version_callback(value: bool) -> None:
     """Print the version and exit when --version is given."""
     if value:
@@ -65,6 +74,9 @@ def scan(
     ),
     save_baseline: Path | None = typer.Option(
         None, "--write-baseline", help="Save the current findings as a baseline and exit 0."
+    ),
+    color: ColorMode = typer.Option(
+        ColorMode.auto, "--color", help="Color text output: auto, always or never."
     ),
 ) -> None:
     """T-30: static scan of code for breaking changes (read-only)."""
@@ -95,10 +107,13 @@ def scan(
             typer.echo(str(exc), err=True)
             raise typer.Exit(EXIT_USAGE) from exc
 
+    use_color = color == ColorMode.always or (color == ColorMode.auto and sys.stdout.isatty())
     report = (
-        render_json(result, target) if fmt is OutputFormat.json else render_text(result, target)
+        render_json(result, target)
+        if fmt == OutputFormat.json
+        else render_text(result, target, rules, app_name=path.name, color=use_color)
     )
-    typer.echo(report)
+    typer.echo(report, color=use_color)
 
     if fail_on is not FailOn.never:
         threshold = SEVERITY_ORDER[fail_on.value]
