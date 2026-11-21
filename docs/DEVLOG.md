@@ -15,7 +15,7 @@ Newest first. One entry per working session or logical change. Records what chan
 ## 2026-11-21 — Saved HTML, PDF and SARIF reports
 - Commit: uncommitted
 - Changed: pyproject.toml, cli/main.py, report/{files,pdf,render}.py, tests/{test_cli,test_baseline,test_report_files}.py, README.md, CHANGELOG.md, docs/{roadmap,tech-stack}.md
-- Why: write and automatically open self-contained HTML or PDF reports without shell redirection; pass HTML as a local URL so browsers open it reliably; use app-named Downloads-folder files by default; export SARIF 2.1.0 for code-scanning tools.
+- Why: write and automatically open self-contained HTML or PDF reports without shell redirection; use an installed Linux browser rather than an HTML file association that can launch the wrong application; use app-named Downloads-folder files by default; export SARIF 2.1.0 for code-scanning tools.
 - Tests: 310 passed; ruff, ruff format --check and mypy --strict clean. A real CLI export produced SARIF 2.1.0 with 25 rule definitions and 22 findings; PDF rendered to five A4 pages and visually inspected.
 - Open: upload integration for a specific CI provider is deliberately left to that provider's workflow.
 
