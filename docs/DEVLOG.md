@@ -12,6 +12,13 @@ Newest first. One entry per working session or logical change. Records what chan
 - Open: <anything unfinished or risky>
 ```
 
+## 2026-11-21 — Version 1.0.0 release preparation
+- Commit: uncommitted
+- Changed: pyproject.toml, src/tminus/__init__.py, CHANGELOG.md
+- Why: align the installed package and CLI version with the first release tag.
+- Tests: 310 passed; ruff, ruff format --check and mypy --strict clean. Built `tminus-1.0.0` wheel and source archive; installed the wheel in a fresh environment and ran `tminus --version` plus a clean scan.
+- Open: configure PyPI Trusted Publishing, commit this version bump, then push tag `v1.0.0`.
+
 ## 2026-11-21 — Release workflow and wheel smoke test
 - Commit: uncommitted
 - Changed: .github/workflows/release.yml, pyproject.toml, README.md, docs/releasing.md
