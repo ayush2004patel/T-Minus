@@ -83,6 +83,50 @@ def test_html_format(tmp_path: Path) -> None:
     assert "v16-removed-python-stdlib" in result.output
 
 
+def test_output_writes_html_instead_of_printing_it(tmp_path: Path) -> None:
+    """--output writes an HTML report and prints its location for the user."""
+    output = tmp_path / "report.html"
+    args = [
+        "scan",
+        str(_project(tmp_path, "import imp\n")),
+        "--target",
+        "v16",
+        "--format",
+        "html",
+        "--output",
+        str(output),
+    ]
+    result = runner.invoke(app, args)
+    assert result.exit_code == 1
+    assert f"Report written to: {output}" in result.output
+    assert output.read_text().startswith("<!doctype html>")
+
+
+def test_pdf_needs_an_output_path(tmp_path: Path) -> None:
+    """PDF is binary, so it must be written to a file rather than the terminal."""
+    result = runner.invoke(app, ["scan", str(tmp_path), "--target", "v16", "--format", "pdf"])
+    assert result.exit_code == 2
+    assert "--format pdf needs --output FILE" in result.output
+
+
+def test_pdf_output_writes_a_pdf_file(tmp_path: Path) -> None:
+    """--format pdf writes a portable PDF report at the requested location."""
+    output = tmp_path / "report.pdf"
+    args = [
+        "scan",
+        str(_project(tmp_path, "import imp\n")),
+        "--target",
+        "v16",
+        "--format",
+        "pdf",
+        "--output",
+        str(output),
+    ]
+    result = runner.invoke(app, args)
+    assert result.exit_code == 1
+    assert output.read_bytes().startswith(b"%PDF")
+
+
 def test_color_always_adds_ansi_codes(tmp_path: Path) -> None:
     """--color always emits terminal colors even when the output is captured."""
     args = [

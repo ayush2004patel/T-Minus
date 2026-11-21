@@ -12,11 +12,11 @@ Newest first. One entry per working session or logical change. Records what chan
 - Open: <anything unfinished or risky>
 ```
 
-## 2026-11-21 — Rule-grouped reports for terminal and browser
+## 2026-11-21 — Saved HTML and PDF reports
 - Commit: uncommitted
-- Changed: cli/main.py, report/render.py, tests/{test_baseline,test_cli}.py, README.md
-- Why: make real-app findings a checklist by upgrade problem in terminal and self-contained HTML, with every technical location retained.
-- Tests: 303 passed; ruff, ruff format --check and mypy --strict clean. precision_mass HTML report generated and inspected.
+- Changed: pyproject.toml, cli/main.py, report/{files,pdf,render}.py, tests/test_cli.py, README.md
+- Why: write and optionally open self-contained HTML or PDF reports without shell redirection.
+- Tests: 306 passed; ruff, ruff format --check and mypy --strict clean. PDF rendered to five A4 pages and visually inspected.
 - Open: SARIF remains the machine-readable integration report format to add next.
 
 ## 2026-11-21 — Real-app scan noise fixes

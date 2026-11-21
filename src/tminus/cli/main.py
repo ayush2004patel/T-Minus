@@ -14,6 +14,8 @@ from tminus.engine.env_check import check_environment, format_rows, run_command
 from tminus.engine.loader import RuleLoadError, UnknownTargetError, load_rules, load_target
 from tminus.engine.models import SEVERITY_ORDER
 from tminus.engine.runner import scan_path
+from tminus.report.files import open_report, write_report
+from tminus.report.pdf import render_pdf
 from tminus.report.render import render_html, render_json, render_text
 
 app = typer.Typer(help="Count down to a clean Frappe/ERPNext upgrade.", no_args_is_help=True)
@@ -29,6 +31,7 @@ class OutputFormat(StrEnum):
     text = "text"
     json = "json"
     html = "html"
+    pdf = "pdf"
 
 
 class FailOn(StrEnum):
@@ -79,10 +82,21 @@ def scan(
     color: ColorMode = typer.Option(
         ColorMode.auto, "--color", help="Color text output: auto, always or never."
     ),
+    output: Path | None = typer.Option(None, "--output", help="Write the report to this file."),
+    open_saved: bool = typer.Option(False, "--open", help="Open a saved HTML or PDF report."),
 ) -> None:
     """T-30: static scan of code for breaking changes (read-only)."""
     if baseline is not None and save_baseline is not None:
         typer.echo("use either --baseline or --write-baseline, not both", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    if fmt == OutputFormat.pdf and output is None:
+        typer.echo("--format pdf needs --output FILE", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    if open_saved and output is None:
+        typer.echo("--open needs --output FILE", err=True)
+        raise typer.Exit(EXIT_USAGE)
+    if open_saved and fmt not in (OutputFormat.html, OutputFormat.pdf):
+        typer.echo("--open is available for HTML and PDF reports", err=True)
         raise typer.Exit(EXIT_USAGE)
     try:
         rules = load_rules(target)
@@ -111,13 +125,29 @@ def scan(
     use_color = fmt == OutputFormat.text and (
         color == ColorMode.always or (color == ColorMode.auto and sys.stdout.isatty())
     )
+    report: str | bytes
     if fmt == OutputFormat.json:
         report = render_json(result, target)
     elif fmt == OutputFormat.html:
         report = render_html(result, target, rules, app_name=path.name)
+    elif fmt == OutputFormat.pdf:
+        report = render_pdf(result, target, rules, app_name=path.name)
     else:
         report = render_text(result, target, rules, app_name=path.name, color=use_color)
-    typer.echo(report, color=use_color)
+    if output is None:
+        typer.echo(report, color=use_color)
+    else:
+        try:
+            saved = write_report(output, report)
+        except OSError as exc:
+            typer.echo(f"cannot write report: {exc}", err=True)
+            raise typer.Exit(EXIT_FAILED) from exc
+        typer.echo(f"Report written to: {saved}")
+        if open_saved:
+            try:
+                open_report(saved)
+            except OSError as exc:
+                typer.echo(f"could not open report: {exc}", err=True)
 
     if fail_on is not FailOn.never:
         threshold = SEVERITY_ORDER[fail_on.value]
