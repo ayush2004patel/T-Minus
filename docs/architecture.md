@@ -14,7 +14,7 @@ T-MINUS is a read-only Python package (`src/tminus/`). The core never imports `f
 | `engine/scanners/` | app-level passes: `hooks`, `js_ast`, `print_format`, `packaging` |
 | `engine/frappe_refs.py`, `sql_refs.py`, `jinja_refs.py`, `js_refs.py` | find DocType/field references in Python, SQL text, Jinja, JavaScript |
 | `engine/app_packaging.py`, `versions.py`, `env_check.py` | packaging facts, version ranges, `tminus env` |
-| `engine/baseline.py`, `report/render.py` | baselines, text/JSON reports |
+| `engine/baseline.py`, `report/` | baselines and text, JSON, HTML, PDF and SARIF reports |
 | `rules/v16/*.yaml` | the rules (data) |
 
 ## Scan passes (`tminus scan`)
@@ -40,4 +40,4 @@ add noise.
 ## Not built yet
 
 Data checks (T-14), the migrate runner (T-7), rehearsal and cutover (T-1/T-0), the Frappe app,
-differential tests, codemods, SARIF/HTML. See `roadmap.md`.
+differential tests and codemods. See `roadmap.md`.

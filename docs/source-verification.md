@@ -8,7 +8,6 @@ Every rule is built from evidence, not memory. This records what each group was 
 |---|---|
 | Frappe wiki "Migrating to version 16" and "query-builder-migration" | the list of breaking changes |
 | BWH *ERPNext Upgrade Playbook* (PDF) | failure classes, real failure cases, process |
-| Preflight (`kaulith/preflight`) rules page | cross-check of coverage |
 | `frappe`, `erpnext`, `hrms` source, branches `version-15` and `version-16` (frappe 16.54.0) | verification of every rule |
 | `bench` source | how `frappe-dependencies` is enforced |
 
@@ -34,5 +33,5 @@ fire on application code that already works on v16; remaining v16 hits are stale
 
 - Translation helper functions (`get_lang_dict`, `get_dict`, ...): not found as plain functions in the v15 source, so no rule.
 - `frappe.sendmail(now=True)`, single-value typed `== "1"`, `!= None` filters, POST-only methods, JS IIFE loading: not verified, not implemented.
-- Whether data of removed DocTypes survives migrate: the playbook and Preflight disagree; to be settled by a table comparison in T-7.
+- Whether data of removed DocTypes survives migrate requires a table comparison in T-7.
 - `first-row-without-order-by` is a heuristic review prompt (severity `info`).

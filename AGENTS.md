@@ -14,7 +14,7 @@
 4. Never edit `apps/frappe`, `apps/erpnext`, `apps/hrms`. Fix the custom app.
 5. One commit per fix, naming the v16 change behind it.
 6. Port code, do not redesign it. Behaviour must stay the same.
-7. A clean exit code is not a clean migration: always read the whole log (`tminus trial` does this).
+7. A clean exit code is not a clean migration: always read the whole log. `tminus trial` is planned, not implemented.
 8. Report what could not be fixed. A silent guess is worse than an open question.
 
 ## Project history

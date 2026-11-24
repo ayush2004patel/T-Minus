@@ -2,21 +2,16 @@
 
 The release workflow runs when a `v*` tag is pushed. It builds the wheel and source distribution,
 installs the wheel in a fresh virtual environment, runs a scanner smoke test, creates the GitHub
-release and publishes to PyPI.
+release and publishes to PyPI. Version 1.0.1 is the current published release.
 
-Before the first release, configure PyPI Trusted Publishing for this GitHub repository:
-
-- owner and repository: this repository's GitHub location
-- workflow: `release.yml`
-- environment: `pypi`
-
-The workflow uses GitHub's OIDC token, so no PyPI API token is stored in the repository.
+Before publishing a later release, make sure the repository secret `PYPI_API_TOKEN` contains a
+valid PyPI API token. The workflow passes that secret to the PyPI publishing action.
 
 Release only after the CI workflow is green:
 
 ```bash
-git tag v1.0.0
-git push origin v1.0.0
+git tag v<version>
+git push origin v<version>
 ```
 
 The tag is the deliberate publish action. Running the workflow manually only builds and tests the

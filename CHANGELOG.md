@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 (2026-11-24)
+
+Release maintenance update following v1.0.0.
+
 ## 1.0.0 (2026-11-21)
 
 First release: the T-30 static scanner for Frappe/ERPNext v15 → v16.

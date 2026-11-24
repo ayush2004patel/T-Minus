@@ -2,7 +2,7 @@
 
 | Stage | Question answered | Inputs | Output |
 |---|---|---|---|
-| T-30 `scan` | Will the code and bench install and import on the target? | `--site` or `--path`, `--target` | Findings by rule, "not checked" list |
+| T-30 `scan` | Which known source-code and packaging risks exist for the target? | app path, `--target` | Findings by rule and report format |
 | T-14 `data` | Is the data safe for the target's patches and removals? | read-only DB | Invalid rows, row counts at risk, clashing custom fields |
 | T-7 `trial` | Does migrate really succeed? | restored copy on a v16 bench | Classified log findings, per-run diff, "clean twice" counter |
 | T-3 `diff` | Does the site behave the same? | v15 + v16 snapshots | Permission matrix diff, report-number diff, list-order diff, smoke results |
@@ -16,7 +16,9 @@
 - T-0 requires: window, named decision maker, failure definition, post-cutover data-loss statement.
 
 ## T-30 checks
-Python/node/MariaDB/Redis versions; each app's `requires-python`, frappe bound, dependency pins, `required_apps`, target branch (`--online`), dependency wheels (`--online`); code in custom apps, patches, hooks; site-saved code; customisations.
+Static source and packaging checks: Python, JavaScript, Jinja print formats, hooks, SQL text,
+removed fields and DocTypes, and app packaging. Site data, saved code, customisations, live
+environment checks and migration execution belong to later stages.
 
 ## T-14 checks
 - Invalid JSON in `item_tax_rate` across Sales Invoice/Sales Order/Delivery Note/Quotation and purchase-side item tables.

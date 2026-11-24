@@ -2,6 +2,13 @@
 
 Newest first. One entry per working session or logical change. Records what changed in each session.
 
+## 2026-11-24 — v1.0.1 documentation alignment
+- Commit: uncommitted
+- Changed: CHANGELOG.md, AGENTS.md, docs/{architecture,DECISIONS,gap-analysis,releasing,roadmap,source-verification,stages,v16-change-catalog}.md, src/tminus/rules/v16/v16-removed-python-stdlib.yaml
+- Why: record v1.0.1 as the current release and keep project documentation and rule evidence independent of other upgrade tools.
+- Tests: documentation and YAML reference audit pending.
+- Open: the CLI source version still reports 1.0.0 and needs a separate, approved source-code fix.
+
 ## Template
 ```
 ## YYYY-MM-DD — <short title>
@@ -17,14 +24,14 @@ Newest first. One entry per working session or logical change. Records what chan
 - Changed: pyproject.toml, src/tminus/__init__.py, CHANGELOG.md
 - Why: align the installed package and CLI version with the first release tag.
 - Tests: 310 passed; ruff, ruff format --check and mypy --strict clean. Built `tminus-1.0.0` wheel and source archive; installed the wheel in a fresh environment and ran `tminus --version` plus a clean scan.
-- Open: configure PyPI Trusted Publishing, commit this version bump, then push tag `v1.0.0`.
+- Open: resolved by the v1.0.1 release.
 
 ## 2026-11-21 — Release workflow and wheel smoke test
 - Commit: uncommitted
 - Changed: .github/workflows/release.yml, pyproject.toml, README.md, docs/releasing.md
-- Why: build a wheel and source distribution, install the wheel in a clean environment, then create a GitHub Release and publish through PyPI Trusted Publishing only for an intentional version tag.
+- Why: build a wheel and source distribution, install the wheel in a clean environment, then create a GitHub Release and publish only for an intentional version tag.
 - Tests: 310 passed; ruff, ruff format --check and mypy --strict clean. Built the wheel and source archive; installed the wheel into a fresh environment and ran `tminus --version` plus a clean scan.
-- Open: configure PyPI Trusted Publishing before the first tagged release.
+- Open: resolved by the v1.0.1 release.
 
 ## 2026-11-21 — Saved HTML, PDF and SARIF reports
 - Commit: uncommitted
@@ -87,6 +94,6 @@ Newest first. One entry per working session or logical change. Records what chan
 ## 2026-10-30 — Design docs created and source-verified
 - Commit: uncommitted
 - Changed: README.md, AGENTS.md, docs/{vision,gap-analysis,architecture,stages,rule-schema,v16-change-catalog,tech-stack,roadmap,source-verification,DECISIONS,DEVLOG}.md
-- Why: define T-MINUS (v15 -> v16 upgrade readiness tool) before writing code; catalog cross-checked against the Frappe v16 wiki and Preflight rules page.
+- Why: define T-MINUS (v15 -> v16 upgrade readiness tool) before writing code; catalog cross-checked against the Frappe v16 wiki and source materials.
 - Tests: none (docs only)
 - Open: name availability (PyPI/GitHub/Frappe app) unchecked; orphan-doctype data-loss claim disputed between sources; catalog entries still need verification against framework source.

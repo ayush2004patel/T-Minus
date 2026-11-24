@@ -1,43 +1,33 @@
-# Gap analysis
+# Capability gaps
 
-Sources: kaulith/preflight docs (README, overview, rules, writing-a-rule), BWH *ERPNext Upgrade Playbook*, Frappe wiki *Migrating to version 16*.
-Source code of Preflight was not reviewed; items marked "no rule found" are based on its published rule list.
+T-MINUS v1.0.1 is a focused, read-only T-30 scanner. Its rules are verified against Frappe,
+ERPNext and HRMS source, the Frappe v16 migration documentation, and the BWH *ERPNext Upgrade
+Playbook*. This document records the upgrade risks that need a later stage rather than pretending
+that a source scan can prove them safe.
 
-## What Preflight does well (keep)
-- Rules as validated YAML, proof link per rule, `fix: before | with-upgrade`, optional `shim`.
-- Fixtures for violations and clean cases, with a rule-coverage test.
-- Skips code written to survive the change (`try/except ImportError`, version-gated code).
-- Bench compatibility checks (Python, node, `required_apps`, dependency pins, wheels).
-- `--baseline`, `preflight: ignore[rule]`, SARIF/HTML output, exit codes 0-3.
-- Honest "not checked" reporting.
+## Current v1.0.1 coverage
 
-## More Preflight features to keep
-- Upstream apps (on frappe's own version branch) listed apart and not counted; `--app` counts them.
-- Findings in patches already run (Patch Log) listed apart; patches still to run are counted and marked.
-- Disabled Server/Client Scripts skipped; `--skip-tests`; `--open`; built files skipped; `--path` mode reports what it could not check.
-- Reads site records for: workspaces without a module, private workspaces, Repost Allowed Types.
+- YAML rules with source references, violation fixtures and clean fixtures.
+- Python, JavaScript, standard print-format templates, hooks, SQL text and app-packaging scans.
+- Baselines, targeted suppressions, CI exit codes, and text, JSON, HTML, PDF and SARIF reports.
+- Static checks for known framework, ERPNext and HRMS compatibility changes.
 
-## Gaps T-MINUS closes
-| # | Gap | Source | T-MINUS answer |
-|---|---|---|---|
-| 1 | Only frappe + ERPNext rules (113) | Preflight rules.md | Rule generator for any app (hrms, payments, india_compliance, custom) |
-| 2 | Rules written by hand per version | writing-a-rule.md | Branch-diff rule generator, human reviewed |
-| 3 | Static only; cannot see silent behaviour | overview.md "Limits" | Differential tests (T-3) |
-| 4 | Reads only some site records (workspaces, repost types, customisations); no integrity checks such as bad `item_tax_rate` JSON that crashes an ERPNext patch | overview.md, Playbook | `tminus data` (T-14) |
-| 5 | No row counts for doctypes leaving the framework. Sources disagree on whether their data is dropped (Playbook) or survives (Preflight) | Playbook, rules.md | Row counts at T-14, plus a table-survival comparison before/after migrate at T-7 to settle it per site |
-| 6 | Does not run or read `bench migrate` | Playbook | `tminus trial` log analysis; flags "Skipping fixture ... ImportError" warnings with exit 0 |
-| 7 | Custom field vs new standard field clash not detected | Playbook | Compare custom fields to target's standard fields |
-| 8 | Site-saved code list omits Print Formats (Jinja), Email Templates, `depends_on`/`fetch_from` expressions | overview.md | Jinja + expression scanning |
-| 9 | JS matched line by line with regex | overview.md | tree-sitter parsing |
-| 10 | No autofix | overview.md | Opt-in libcst codemods for safe rules |
-| 11 | Sort change `modified`→`creation` deliberately not covered | rules.md "Not covered" | Targeted heuristics: first/last-row logic without `order_by`, DocType `sort_field`, differential list check |
-| 12 | Upgrade steps not covered | overview.md | Stages T-7 to T-0 |
-| 13 | HRMS changes (Holiday List Assignment, removed benefit helpers) not covered | Playbook | HRMS rule set + data check for Employee holiday lists |
-| 14 | Wiki items with no rule found | Wiki | See `v16-change-catalog.md` (marked NEW) |
+## Planned capability gaps
 
-## Wiki items with no Preflight rule found (candidates)
-`db.commit()` in doc hooks; `db.get_value` casting single doctypes; JS in Reports/Charts/Pages evaluated as IIFEs;
-`get_doc(dt, name, field=value)` no longer updates; `sendmail(now=True)` no longer commits; POST-only methods
-(`logout`, `web_logout`, `upload_file`, `send_login_link`); `site_cache` with unhashable args; `!= None` filter fix;
-time-field default removed; `meta.get_valid_columns` excludes virtual fields; `get_translated_dict` hook and translate helpers removed;
-System Console admin-only; Country `code` now required.
+| Gap | Why source scanning cannot settle it | Planned stage |
+|---|---|---|
+| Invalid or upgrade-sensitive site data | Values live in the database, not in an app folder. | T-14 data checks |
+| Removed-DocType data survival | A real migration on a restored copy is needed to compare tables before and after migration. | T-7 trial |
+| Custom-field clashes with target standard fields | Requires the site's Custom Field records. | T-14 data checks |
+| Saved Server Scripts, Client Scripts and customisations | These are stored in the site database. | T-14 data checks |
+| Permission and ordering behaviour | Static code cannot prove runtime behaviour for real users and real data. | T-3 differential checks |
+| Migration warnings and partial failures | Only a complete `bench migrate` log on a restored site can show them. | T-7 trial |
+| Safe automated changes | Compatibility fixes need explicit review before any mutation. | Future codemods |
+| Rehearsal timing, rollback and cutover decisions | These are operational decisions, not source findings. | T-1 and T-0 |
+
+## Candidate checks requiring source verification
+
+Potential rules remain candidates until verified against framework source or a merged upstream
+change. Examples include changed transaction behaviour, single-DocType value types, report and
+page JavaScript loading, POST-only methods, cache argument restrictions, field defaults, virtual
+fields, translations and country-code validation.

@@ -8,6 +8,6 @@ Short decision records. Add new ones at the bottom. Status: accepted | supersede
 | 2 | 2026-10-30 | Architecture: standalone Python CLI core + thin Frappe app | CI use without a bench, plus UI and runtime checks | accepted |
 | 3 | 2026-10-30 | Read-only by default; mutation only via `tminus fix --apply` | Safety; matches playbook rules | accepted (confirmed by user's approval of stage design; re-confirm if disputed) |
 | 4 | 2026-10-30 | v1 scope: Frappe/ERPNext v15 -> v16 only | Engine stays version-agnostic; other frameworks are a later idea | accepted (same note as #3) |
-| 5 | 2026-10-30 | Stack: Python 3.12+, typer, ast + libcst, tree-sitter, jinja2 parser, YAML + pydantic v2, PyMySQL/mariadb read-only, pytest, ruff, mypy | See docs/tech-stack.md | accepted |
+| 5 | 2026-10-30 | Stack: Python 3.12+, typer, ast, tree-sitter, YAML + pydantic v2, pytest, ruff and mypy | See docs/tech-stack.md; database and codemod dependencies remain future-stage choices | accepted |
 | 6 | 2026-10-30 | Core never imports `frappe`; live-Frappe checks live in `tminus_app` | Core must run anywhere | accepted |
 | 7 | 2026-10-30 | Project history kept in repo files (DEVLOG, DECISIONS, git log) | Continuity across work sessions | accepted |

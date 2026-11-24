@@ -3,27 +3,27 @@
 Release pattern: ship a focused v1, then release often. Each release adds one stage or one
 capability; nothing ships half-built.
 
-## v1.0 — T-30 static scanner (target: 7 days)
+## v1.0 — T-30 static scanner (released as v1.0.1)
 
 Already built (M0–M1.7): Python, JavaScript, Jinja print formats, hooks, SQL text, removed
 fields and DocTypes, app packaging checks, `tminus env`, 236 tests, rules verified against
 frappe, erpnext and hrms version-15 vs version-16 source.
 
-| Day | Work |
+| Day | Completed work |
 |---|---|
 | 1 | `--baseline` and a summary grouped by stage and severity |
 | 2 | SARIF, HTML and PDF reports — complete |
 | 3 | Run on a real app (`precision_mass`); fix false positives, speed, gaps |
 | 4 | Missing wiki rules, each verified against framework source |
-| 5 | README quickstart, docs, CHANGELOG, LICENSE, PyPI name check |
-| 6 | Release workflow, wheel, tag `v1.0.0`, GitHub release |
-| 7 | Buffer, demo script, `v1.0.1` fixes |
+| 5 | README quickstart, docs, CHANGELOG, LICENSE and PyPI package setup |
+| 6 | Release workflow, wheel smoke test, GitHub release and PyPI publication |
+| 7 | Release follow-up fixes published as `v1.0.1` |
 
 Definition of done for v1.0: `pytest`, `ruff`, `mypy --strict` green in CI; a clean install
 from the built wheel runs `tminus scan` and `tminus env`; the README states plainly what is
 and is not checked.
 
-## After v1.0
+## After v1.0.1
 
 | Release | Content |
 |---|---|
@@ -39,5 +39,4 @@ and is not checked.
 - Other frameworks: idea only.
 
 ## Open items
-- PyPI name availability for `tminus` (unchecked).
 - Optional: follow symlinked app folders.

@@ -18,4 +18,4 @@ autofix: none
 confidence: high
 references:
   - "BWH ERPNext Upgrade Playbook, section 'The Environment'"
-  - "https://github.com/kaulith/preflight/blob/main/docs/rules.md (rule v16-removed-python-stdlib)"
+  - "https://docs.python.org/3.13/library/removed.html (removed standard-library modules)"
