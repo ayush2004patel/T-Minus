@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tminus"
-version = "1.0.0"
+version = "1.0.1"
 description = "Count down to a clean Frappe/ERPNext upgrade."
 readme = "README.md"
 requires-python = ">=3.12"
