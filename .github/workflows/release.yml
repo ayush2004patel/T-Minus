@@ -63,11 +63,11 @@ jobs:
     environment:
       name: pypi
       url: https://pypi.org/p/tminus
-    permissions:
-      id-token: write
     steps:
       - uses: actions/download-artifact@v4
         with:
           name: distributions
           path: dist/
       - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
